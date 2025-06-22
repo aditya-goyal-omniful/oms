@@ -1,0 +1,35 @@
+server:
+  port: ":8082"
+  read_timeout: 10s
+  write_timeout: 10s
+  idle_timeout: 70s
+  name: "oms"
+
+service:
+  name: "oms"
+
+mongo:
+  uri: "mongodb://localhost:27017"
+  dbname: "OMS"
+  collectionName: "orders"
+
+s3:
+ bucketName: "orders"
+ fileName: "orders.csv"
+
+aws:
+  region: "us-east-1"
+  account: "000000000000"
+  accessKeyId: "test"
+  secretAccessKey: "test"
+  sqsendpoint: "http://localhost:4566"
+  sqsname: "sqs-queue"
+
+client:
+  serviceName: "ims"
+  baseURL: "http://localhost:8087"
+  MaxIdleConns: 100
+  MaxIdleConnsPerHost: 100
+
+http:
+  timeout: 30s
