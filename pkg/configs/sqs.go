@@ -3,7 +3,7 @@ package configs
 import (
 	"log"
 
-	"github.com/Abhishek-Omniful/OMS/mycontext"
+	"github.com/aditya-goyal-omniful/oms/context"
 	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/sqs"
 )
@@ -14,14 +14,12 @@ func SQSInit() {
 
 	log.Println("Initializing SQS Queue")
 
-	ctx := mycontext.GetContext()
+	ctx := context.GetContext()
 
 	region := config.GetString(ctx, "aws.region")
 	account := config.GetString(ctx, "aws.account")
 	endpoint := config.GetString(ctx, "aws.sqsendpoint")
 	queueName := config.GetString(ctx, "aws.sqsname")
-
-	//log.Println("Region:", region, "Account:", account, "Endpoint:", endpoint)
 
 	sqsCfg := sqs.GetSQSConfig(
 		ctx,

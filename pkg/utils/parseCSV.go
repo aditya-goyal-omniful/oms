@@ -10,6 +10,7 @@ import (
 	nethttp "net/http"
 
 	localContext "github.com/aditya-goyal-omniful/oms/context"
+	"github.com/google/uuid"
 	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/csv"
 	"github.com/omniful/go_commons/http"
@@ -18,11 +19,11 @@ import (
 )
 
 type Order struct {
-	OrderID  int64   `json:"order_id" csv:"order_id"`
-	SKUID    int64   `json:"sku_id" csv:"sku_id"`
+	OrderID  uuid.UUID   `json:"order_id" csv:"order_id"`
+	SKUID    uuid.UUID   `json:"sku_id" csv:"sku_id"`
+	HubID    uuid.UUID   `json:"hub_id" csv:"hub_id"`
+	SellerID uuid.UUID   `json:"seller_id" csv:"seller_id"`
 	Quantity int     `json:"quantity" csv:"quantity"`
-	SellerID int64   `json:"seller_id" csv:"seller_id"`
-	HubID    int64   `json:"hub_id" csv:"hub_id"`
 	Price    float64 `json:"price" csv:"price"`
 	Status   string  `json:"status" csv:"status"`
 }
@@ -55,9 +56,9 @@ func init() {
 	)
 }
 
-func ValidateWithIMS(hubID, skuID int64) bool {
+func ValidateWithIMS(hubID, skuID uuid.UUID) bool {
 	req := &http.Request{
-		Url: fmt.Sprintf("/api/v1/validators/validate_order/%d/%d", hubID, skuID),
+		Url: fmt.Sprintf("/api/v1/validators/validate_order/%s/%s", hubID, skuID),
 		Headers: map[string][]string{
 			"Content-Type": {"application/json"},
 		},
@@ -76,20 +77,20 @@ func ValidateWithIMS(hubID, skuID int64) bool {
 }
 
 func ValidateOrder(order *Order) error {
-	if order.OrderID <= 0 {
+	if order.OrderID == uuid.Nil {
 		return errors.New("invalid OrderID")
 	}
-	if order.SKUID <= 0 {
+	if order.SKUID == uuid.Nil {
 		return errors.New("invalid SKUID")
+	}
+	if order.HubID == uuid.Nil {
+		return errors.New("invalid HubID")
+	}
+	if order.SellerID == uuid.Nil {
+		return errors.New("invalid SellerID")
 	}
 	if order.Quantity <= 0 {
 		return errors.New("invalid Quantity")
-	}
-	if order.SellerID <= 0 {
-		return errors.New("invalid SellerID")
-	}
-	if order.HubID <= 0 {
-		return errors.New("invalid HubID")
 	}
 	if order.Price < 0 {
 		return errors.New("invalid Price")
@@ -158,10 +159,10 @@ func ParseCSV(tmpFile string, ctx context.Context, logger *log.Logger, collectio
 		for _, row := range records {
 			logger.Infof("CSV Row: %v", row)
 
-			orderID, _ := strconv.ParseInt(row[colIdx["order_id"]], 10, 64)
-			skuID, _ := strconv.ParseInt(row[colIdx["sku_id"]], 10, 64)
-			hubID, _ := strconv.ParseInt(row[colIdx["hub_id"]], 10, 64)
-			sellerID, _ := strconv.ParseInt(row[colIdx["seller_id"]], 10, 64)
+			orderID, _ := uuid.Parse(row[colIdx["order_id"]])
+			skuID, _ := uuid.Parse(row[colIdx["sku_id"]])
+			hubID, _ := uuid.Parse(row[colIdx["hub_id"]])
+			sellerID, _ := uuid.Parse(row[colIdx["seller_id"]])
 			price, _ := strconv.ParseFloat(row[colIdx["price"]], 64)
 			quantity, _ := strconv.Atoi(row[colIdx["quantity"]])
 

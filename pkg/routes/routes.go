@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/Abhishek-Omniful/OMS/pkg/controllers"
+	"github.com/aditya-goyal-omniful/oms/pkg/controllers"
 	"github.com/omniful/go_commons/http"
 )
 

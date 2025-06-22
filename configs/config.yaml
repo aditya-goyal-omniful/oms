@@ -10,12 +10,12 @@ service:
 
 mongo:
   uri: "mongodb://localhost:27017"
-  dbname: "OMS"
+  dbname: "oms"
   collectionName: "orders"
 
 s3:
  bucketName: "orders"
- fileName: "orders.csv"
+ fileName: "order.csv"
 
 aws:
   region: "us-east-1"

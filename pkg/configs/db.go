@@ -3,7 +3,7 @@ package configs
 import (
 	"log"
 
-	"github.com/Abhishek-Omniful/OMS/mycontext"
+	"github.com/aditya-goyal-omniful/oms/context"
 	"github.com/omniful/go_commons/config"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,7 +15,7 @@ var err error
 var collection *mongo.Collection
 
 func ConnectDB() {
-	ctx := mycontext.GetContext()
+	ctx := context.GetContext()
 	log.Println("Connecting to MongoDB...")
 	mongoURI := config.GetString(ctx, "mongo.uri")
 	mongoClient, err = mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))

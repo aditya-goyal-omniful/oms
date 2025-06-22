@@ -12,6 +12,7 @@ import (
 	localContext "github.com/aditya-goyal-omniful/oms/context"
 	localConfig "github.com/aditya-goyal-omniful/oms/pkg/configs"
 	awsS3 "github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/google/uuid"
 	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/sqs"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -26,11 +27,11 @@ type BulkOrderRequest struct {
 }
 
 type Order struct {
-	OrderID  int64   `json:"order_id" csv:"order_id"`
-	SKUID    int64   `json:"sku_id" csv:"sku_id"`
+	OrderID  uuid.UUID   `json:"order_id" csv:"order_id"`
+	SKUID    uuid.UUID   `json:"sku_id" csv:"sku_id"`
+	HubID    uuid.UUID   `json:"hub_id" csv:"hub_id"`
+	SellerID uuid.UUID   `json:"seller_id" csv:"seller_id"`
 	Quantity int     `json:"quantity" csv:"quantity"`
-	SellerID int64   `json:"seller_id" csv:"seller_id"`
-	HubID    int64   `json:"hub_id" csv:"hub_id"`
 	Price    float64 `json:"price" csv:"price"`
 }
 
@@ -72,9 +73,6 @@ func StoreInS3(s *StoreCSV) error {
 	bucketName := config.GetString(ctx, "s3.bucketName")
 	filename := config.GetString(ctx, "s3.fileName")
 
-	// bucketName := os.Getenv("S3_BUCKETNAME")
-	// filename := os.Getenv("S3_FILENAME")
-
 	input := &awsS3.PutObjectInput{
 		Bucket: &bucketName,
 		Key:    &filename,
@@ -83,7 +81,6 @@ func StoreInS3(s *StoreCSV) error {
 
 	_, err := client.PutObject(ctx, input)
 	if err != nil {
-		//log.Println("here is error1")
 		log.Println(err)
 		return errors.New("failed to upload to s3")
 	}
@@ -111,10 +108,9 @@ func ValidateS3Path_PushToSQS(req *BulkOrderRequest) error {
 	log.Println(bucket, key)
 
 	_, err := client.HeadObject(ctx, &awsS3.HeadObjectInput{
-		Bucket: &bucket, //bucket name
-		Key:    &key,    // file name
+		Bucket: &bucket,
+		Key:    &key,
 	})
-	//log.Println(location)
 
 	if err != nil {
 		log.Println(err)

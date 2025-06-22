@@ -26,8 +26,8 @@ func ConsumerInit() {
 		&queueHandler{}, // defined below
 		10,
 		30,
-		false, // isAsync
-		false, // sendBatchMessage
+		false,			 // isAsync
+		false,			 // sendBatchMessage
 	)
 
 	if err != nil {
@@ -45,8 +45,6 @@ func StartConsumer(ctx context.Context) {
 type queueHandler struct{}
 
 func (h *queueHandler) Process(ctx context.Context, msgs *[]sqs.Message) error {
-	//s3Client := GetS3Client()  we dont need to get it as it is initialized in same package
-
 	if err != nil {
 		logger.Errorf("Failed to create S3 client: %v", err)
 		return err
@@ -72,7 +70,7 @@ func (h *queueHandler) Process(ctx context.Context, msgs *[]sqs.Message) error {
 			continue
 		}
 
-		// Step 1: Download CSV to local temp file
+		// Download CSV to local temp file
 		tmpFile := filepath.Join(os.TempDir(), filepath.Base(payload.Key))
 		getObjOutput, err := s3Client.GetObject(ctx, &awsS3.GetObjectInput{
 			Bucket: aws.String(payload.Bucket),
