@@ -1,5 +1,3 @@
-
-
 services:
   # Zookeeper
   zookeeper:
@@ -12,17 +10,24 @@ services:
 
   # Kafka 
   kafka:
-    image: bitnami/kafka:latest
+    image: confluentinc/cp-kafka:7.5.3
     container_name: oms-kafka
     ports:
-      - "9090:9092" 
+      - "9092:9092"
+      - "9093:9093"
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9090
-      KAFKA_CFG_ZOOKEEPER_CONNECT: oms-zookeeper:2181
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9093,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
     depends_on:
       - zookeeper
+    networks:
+      - oms_ims_network
+    restart: always
 
   # MongoDB
   mongodb:
@@ -34,6 +39,18 @@ services:
       - mongodb_data:/data/db
     environment:
       MONGO_INITDB_DATABASE: oms
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: oms-redis
+    ports:
+      - "6379:6379" 
+    volumes:
+      - redis_data:/data
+    networks:
+      - oms_ims_network
+    restart: always
 
   # LocalStack
   localstack:
@@ -49,3 +66,9 @@ services:
 
 volumes:
   mongodb_data:
+  redis_data:
+
+
+networks:
+  oms_ims_network:
+    driver: bridge
