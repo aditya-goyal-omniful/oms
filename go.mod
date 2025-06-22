@@ -7,7 +7,6 @@ toolchain go1.24.4
 require (
 	github.com/aws/aws-sdk-go v1.44.140
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.81.0
-	github.com/docker/distribution v2.8.3+incompatible
 	github.com/gin-gonic/gin v1.10.1
 	github.com/google/uuid v1.6.0
 	github.com/omniful/go_commons v0.6.23
