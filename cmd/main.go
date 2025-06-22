@@ -3,14 +3,14 @@ package main
 import (
 	"log"
 
-	"github.com/Abhishek-Omniful/OMS/mycontext"
+	"github.com/aditya-goyal-omniful/oms/context"
 	"github.com/aditya-goyal-omniful/oms/pkg/routes"
 	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/http"
 )
 
 func main() {
-	ctx := mycontext.GetContext()
+	ctx := context.GetContext()
 
 	server := http.InitializeServer(
 		config.GetString(ctx, "server.port"),

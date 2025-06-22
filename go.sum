@@ -1,5 +1,3 @@
-github.com/Abhishek-Omniful/OMS v0.0.0-20250622100317-485acd0ecd86 h1:582UgPhv9xIoce4JnvnT7NJ50tl7kt9gCXUtpGk66qM=
-github.com/Abhishek-Omniful/OMS v0.0.0-20250622100317-485acd0ecd86/go.mod h1:XyQBrFGCN3+DRvhcGGaYmIviqQzxxjWuUzJQWbXFOZE=
 github.com/ajg/form v1.5.1 h1:t9c7v8JUKu/XxOGBU0yjNpaMloxGEJhUkqFRq0ibGeU=
 github.com/ajg/form v1.5.1/go.mod h1:uL1WgH+h2mgNtvBq0339dVnzXdBETtL2LeUXaIv25UY=
 github.com/aws/aws-sdk-go v1.44.140 h1:6MxVSiAORc6AG+oh6401TEgWHb1ZzFL8y6+eBLoJtdU=

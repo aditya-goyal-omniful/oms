@@ -19,18 +19,18 @@ import (
 )
 
 type Order struct {
-	OrderID  uuid.UUID   `json:"order_id" csv:"order_id"`
-	SKUID    uuid.UUID   `json:"sku_id" csv:"sku_id"`
-	HubID    uuid.UUID   `json:"hub_id" csv:"hub_id"`
-	SellerID uuid.UUID   `json:"seller_id" csv:"seller_id"`
-	Quantity int     `json:"quantity" csv:"quantity"`
-	Price    float64 `json:"price" csv:"price"`
-	Status   string  `json:"status" csv:"status"`
+	OrderID  uuid.UUID `json:"order_id" csv:"order_id" bson:"order_id"`
+	SKUID    uuid.UUID `json:"sku_id" csv:"sku_id" bson:"sku_id"`
+	HubID    uuid.UUID `json:"hub_id" csv:"hub_id" bson:"hub_id"`
+	SellerID uuid.UUID `json:"seller_id" csv:"seller_id" bson:"seller_id"`
+	Quantity int       `json:"quantity" csv:"quantity" bson:"quantity"`
+	Price    float64   `json:"price" csv:"price" bson:"price"`
+	Status   string    `json:"status" csv:"status" bson:"status"`
 }
 
 type ValidationResponse struct {
-	IsValid bool
-	Error   error
+	IsValid bool	`json:"is_valid"`
+	Error   string	`json:"error"`
 }
 
 var client *http.Client
@@ -58,7 +58,7 @@ func init() {
 
 func ValidateWithIMS(hubID, skuID uuid.UUID) bool {
 	req := &http.Request{
-		Url: fmt.Sprintf("/api/v1/validators/validate_order/%s/%s", hubID, skuID),
+		Url: fmt.Sprintf("validators/validate_order/%s/%s", hubID, skuID),
 		Headers: map[string][]string{
 			"Content-Type": {"application/json"},
 		},
@@ -106,11 +106,16 @@ func ValidateOrder(order *Order) error {
 }
 
 func saveOrder(ctx context.Context, order *Order, collection *mongo.Collection) error {
-	order.Status = "onHold" // Set default status
+	log.Infof("Attempting to insert order into DB: %+v", order) // Log the full order
+
+	order.Status = "on_hold"
 	_, err := collection.InsertOne(ctx, order)
 	if err != nil {
+		log.Errorf("Mongo insert error: %v", err)
 		return fmt.Errorf("failed to insert order: %w", err)
 	}
+
+	log.Infof("Order successfully inserted: %v", order.OrderID)
 	return nil
 }
 

@@ -5,7 +5,6 @@ go 1.24.3
 toolchain go1.24.4
 
 require (
-	github.com/Abhishek-Omniful/OMS v0.0.0-20250622100317-485acd0ecd86
 	github.com/aws/aws-sdk-go v1.44.140
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.81.0
 	github.com/gin-gonic/gin v1.10.1

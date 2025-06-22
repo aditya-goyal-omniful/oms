@@ -18,14 +18,13 @@ func ServeHome(c *gin.Context) {
 func StoreInS3(c *gin.Context) {
 	var req = &models.StoreCSV{}
 
-	body, _ := c.GetRawData() // 👈 get raw body
+	body, _ := c.GetRawData()
 	log.Println("Raw Body:", string(body))
 
-	// 👇 Put body back for binding
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	if err := c.ShouldBindJSON(req); err != nil {
-		log.Println("Bind Error:", err) // 👈 log bind error
+		log.Println("Bind Error:", err)
 		c.JSON(400, gin.H{
 			"error": "Failed Parse request",
 		})
@@ -56,7 +55,7 @@ func CreateBulkOrder(c *gin.Context) {
 		})
 		return
 	}
-	err = models.ValidateS3Path_PushToSQS(req)
+	err = models.ValidateAndPushToSQS(req)
 
 	if err != nil {
 		c.JSON(400, gin.H{
