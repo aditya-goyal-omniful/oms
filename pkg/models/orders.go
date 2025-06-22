@@ -6,13 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"strings"
 
 	localContext "github.com/aditya-goyal-omniful/oms/context"
 	localConfig "github.com/aditya-goyal-omniful/oms/pkg/configs"
+	"github.com/aditya-goyal-omniful/oms/pkg/services"
 	awsS3 "github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/google/uuid"
 	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/sqs"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,16 +25,6 @@ type StoreCSV struct {
 
 type BulkOrderRequest struct {
 	FilePath string `json:"filePath"`
-}
-
-type Order struct {
-	OrderID  uuid.UUID `json:"order_id" csv:"order_id" bson:"order_id"`
-	SKUID    uuid.UUID `json:"sku_id" csv:"sku_id" bson:"sku_id"`
-	HubID    uuid.UUID `json:"hub_id" csv:"hub_id" bson:"hub_id"`
-	SellerID uuid.UUID `json:"seller_id" csv:"seller_id" bson:"seller_id"`
-	Quantity int       `json:"quantity" csv:"quantity" bson:"quantity"`
-	Price    float64   `json:"price" csv:"price" bson:"price"`
-	Status   string    `json:"status" csv:"status" bson:"status"`
 }
 
 var mongoClinet *mongo.Client
@@ -65,6 +56,14 @@ func init() {
 
 	localConfig.ConsumerInit()     // Initialize SQS Consumer
 	localConfig.StartConsumer(ctx) // Start the SQS consumer for processing CSV files
+
+	go services.InitKafkaConsumer() // Initialize Kafka Producer
+	
+	// Sleep to allow consumer to initialize
+	time.Sleep(3 * time.Second)
+
+	// Then produce messages
+	services.InitKafkaProducer()
 }
 
 func StoreInS3(s *StoreCSV) error {

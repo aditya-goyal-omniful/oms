@@ -20,6 +20,8 @@ func main() {
 		false,
 	)
 
+	server.Static("/public", "./public")
+
 	routes.InitServer(server)
 	err := server.StartServer(config.GetString(ctx, "server.name"))
 	if err != nil {
