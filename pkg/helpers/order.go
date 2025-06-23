@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/omniful/go_commons/httpclient"
 	"github.com/omniful/go_commons/httpclient/request"
+	"github.com/omniful/go_commons/i18n"
 	"github.com/omniful/go_commons/log"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -33,7 +34,7 @@ func UpdateOrderStatus(orderID uuid.UUID, status string) error {
 
 	_, err = collection.UpdateOne(ctx, filter, update)
 	if err != nil {
-		log.Println("MongoDB update failed:", err)
+		log.WithError(err).Error(i18n.Translate(ctx, "MongoDB update failed:"))
 	}
 	return err
 }
@@ -53,7 +54,7 @@ func CheckAndUpdateOrder(ctx context.Context, order models.Order) {
 
 	resp, err := client.Send(ctx, req)
 	if err != nil {
-		log.Printf("HTTP call failed for order %s: %v", order.OrderID, err)
+		log.WithError(err).Error(i18n.Translate(ctx, "HTTP call failed for order %s:"), order.OrderID)
 		return
 	}
 
@@ -61,7 +62,7 @@ func CheckAndUpdateOrder(ctx context.Context, order models.Order) {
 		Available bool `json:"available"`
 	}
 	if err := resp.UnmarshalBody(&result); err != nil {
-		log.Printf("Failed to unmarshal IMS response for order %s: %v", order.OrderID, err)
+		log.WithError(err).Error(i18n.Translate(ctx, "Failed to unmarshal IMS response for order %s:"), order.OrderID)
 		return
 	}
 
@@ -71,7 +72,7 @@ func CheckAndUpdateOrder(ctx context.Context, order models.Order) {
 	}
 
 	if err := UpdateOrderStatus(uuid.UUID(order.OrderID), newStatus); err != nil {
-		log.Infof("Failed to update status for order %s: %v", order.OrderID, err)
+		log.WithError(err).Error(i18n.Translate(ctx, "Failed to update status for order %s:"), order.OrderID)
 	}
 }
 
@@ -117,13 +118,13 @@ func FetchOrders(ctx context.Context, sellerID uuid.UUID, status string, startDa
 
 	collection, err := database.GetMongoCollection("oms", "orders")
 	if err != nil {
-		log.Errorf("MongoDB collection error: %v", err)
+		log.WithError(err).Error(i18n.Translate(ctx, "MongoDB collection error:"))
 		return nil, err
 	}
 
 	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
-		log.Errorf("MongoDB query error: %v", err)
+		log.WithError(err).Error(i18n.Translate(ctx, "MongoDB query error:"))
 		return nil, err
 	}
 	defer cursor.Close(ctx)
@@ -132,7 +133,7 @@ func FetchOrders(ctx context.Context, sellerID uuid.UUID, status string, startDa
 	for cursor.Next(ctx) {
 		var o models.Order
 		if err := cursor.Decode(&o); err != nil {
-			log.Warnf("Failed to decode order: %v", err)
+			log.Warnf(i18n.Translate(ctx, "Failed to decode order: %v"), err)
 			continue
 		}
 		orders = append(orders, o)
@@ -153,13 +154,13 @@ func ValidateSKUAndHubs(ctx context.Context, skuID, hubID, tenantID uuid.UUID) (
 		SetHeaders(headers).
 		Build()
 	if err != nil {
-		log.Warnf("Failed to build SKU request: %v", err)
+		log.Warnf(i18n.Translate(ctx, "Failed to build SKU request: %v"), err)
 		return false, err
 	}
 
 	skuResp, err := client.Send(ctx, skuReq)
 	if err != nil || skuResp.StatusCode() != 200 {
-		log.Warnf("SKU validation failed: %v", err)
+		log.Warnf(i18n.Translate(ctx, "SKU validation failed: %v"), err)
 		return false, nil
 	}
 
@@ -170,13 +171,13 @@ func ValidateSKUAndHubs(ctx context.Context, skuID, hubID, tenantID uuid.UUID) (
 		SetHeaders(headers).
 		Build()
 	if err != nil {
-		log.Warnf("Failed to build Hub request: %v", err)
+		log.Warnf(i18n.Translate(ctx, "Failed to build Hub request: %v"), err)
 		return false, err
 	}
 
 	hubResp, err := client.Send(ctx, hubReq)
 	if err != nil || hubResp.StatusCode() != 200 {
-		log.Warnf("Hub validation failed: %v", err)
+		log.Warnf(i18n.Translate(ctx, "Hub validation failed: %v"), err)
 		return false, nil
 	}
 

@@ -1,9 +1,11 @@
 package middlewares
 
 import (
+	"context"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/omniful/go_commons/i18n"
 	"github.com/omniful/go_commons/log"
 )
 
@@ -21,7 +23,7 @@ import (
 //
 // Usage:
 //   router.Use(middlewares.RequestLogger())
-func RequestLogger() gin.HandlerFunc {
+func RequestLogger(ctx context.Context) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 
@@ -36,7 +38,7 @@ func RequestLogger() gin.HandlerFunc {
 		latency := time.Since(start)
 		statusCode := c.Writer.Status()
 
-		log.Infof("Method=%s Path=%s Query=%s Status=%d Latency=%s TenantID=%s",
+		log.Infof(i18n.Translate(ctx, "Method=%s Path=%s Query=%s Status=%d Latency=%s TenantID=%s"),
 			method, path, raw, statusCode, latency, tenantID)
 	}
 }

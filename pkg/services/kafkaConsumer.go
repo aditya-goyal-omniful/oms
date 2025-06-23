@@ -6,6 +6,7 @@ import (
 
 	"github.com/aditya-goyal-omniful/oms/pkg/helpers"
 	"github.com/aditya-goyal-omniful/oms/pkg/models"
+	"github.com/omniful/go_commons/i18n"
 	"github.com/omniful/go_commons/kafka"
 	"github.com/omniful/go_commons/log"
 	"github.com/omniful/go_commons/pubsub"
@@ -22,8 +23,8 @@ func (h *MessageHandler) Process(ctx context.Context, msg *pubsub.Message) error
 	return h.Handle(ctx, msg)
 }
 
-func InitKafkaConsumer() {
-	log.Println("Initializing Kafka consumer...")
+func InitKafkaConsumer(ctx context.Context) {
+	log.Infof(i18n.Translate(ctx, "Initializing Kafka consumer..."))
 
 	kafkaConsumer = kafka.NewConsumer(
 		kafka.WithBrokers([]string{"localhost:9092"}),
@@ -42,22 +43,23 @@ func GetKafkaConsumer() *kafka.ConsumerClient {
 }
 
 func ReceiveOrder() {
+	ctx := context.Background()
+
 	defer func() {
-		log.Println("Closing Kafka consumer")
+		log.Infof(i18n.Translate(ctx, "Closing Kafka consumer"))
 		kafkaConsumer.Close()
 	}()
 
-	log.Println("Attaching NewRelic interceptor to consumer")
+	log.Infof(i18n.Translate(ctx, "Attaching NewRelic interceptor to consumer"))
 	kafkaConsumer.SetInterceptor(interceptor.NewRelicInterceptor())
 
 	handler := &MessageHandler{}
 	topic := "order.created"
 
-	log.Printf("Registering handler for topic: %s", topic)
+	log.Infof(i18n.Translate(ctx, "Registering handler for topic: %s"), topic)
 	kafkaConsumer.RegisterHandler(topic, handler)
 
-	log.Printf("Subscribing to topic: %s", topic)
-	ctx := context.Background()
+	log.Infof(i18n.Translate(ctx, "Subscribing to topic: %s"), topic)
 	go kafkaConsumer.Subscribe(ctx)
 
 	select {} // Block forever
@@ -67,7 +69,7 @@ func (h *MessageHandler) Handle(ctx context.Context, msg *pubsub.Message) error 
 	var order models.Order
 	err := json.Unmarshal(msg.Value, &order)
 	if err != nil {
-		log.Errorf("Failed to unmarshal Kafka message: %v", err)
+		log.Errorf(i18n.Translate(ctx, "Failed to unmarshal Kafka message: %v"), err)
 		return err
 	}
 

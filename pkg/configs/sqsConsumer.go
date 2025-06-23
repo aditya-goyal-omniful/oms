@@ -13,13 +13,15 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
+	"github.com/omniful/go_commons/i18n"
+	"github.com/omniful/go_commons/log"
 	"github.com/omniful/go_commons/sqs"
 )
 
 var consumer *sqs.Consumer
 var err error
 
-func ConsumerInit() {
+func ConsumerInit(ctx context.Context) {
 	sqsQueue := GetSqs()
 	consumer, err = sqs.NewConsumer(
 		sqsQueue,
@@ -33,22 +35,22 @@ func ConsumerInit() {
 	)
 
 	if err != nil {
-		logger.Panicf("Failed to start SQS consumer: %v", err)
+		log.Panicf(i18n.Translate(ctx, "Failed to start SQS consumer: %v"), err)
 	}
 
-	logger.Infof("SQS consumer initialized")
+	log.Infof(i18n.Translate(ctx, "SQS consumer initialized"))
 }
 
 func StartConsumer(ctx context.Context) {
 	consumer.Start(ctx)
-	logger.Infof("SQS consumer started")
+	log.Infof(i18n.Translate(ctx, "SQS consumer started"))
 }
 
 type queueHandler struct{}
 
 func (h *queueHandler) Process(ctx context.Context, msgs *[]sqs.Message) error {
 	if err != nil {
-		logger.Errorf("Failed to create S3 client: %v", err)
+		log.Errorf(i18n.Translate(ctx, "Failed to create S3 client: %v"), err)
 		return err
 	}
 	for _, msg := range *msgs {
@@ -58,7 +60,7 @@ func (h *queueHandler) Process(ctx context.Context, msgs *[]sqs.Message) error {
 			Key    string `json:"key"`
 		}
 		if err := json.Unmarshal(msg.Value, &payload); err != nil {
-			logger.Errorf("Invalid message payload: %v", err)
+			log.Errorf(i18n.Translate(ctx, "Invalid message payload: %v"), err)
 			continue
 		}
 
@@ -68,7 +70,7 @@ func (h *queueHandler) Process(ctx context.Context, msgs *[]sqs.Message) error {
 			Key:    aws.String(payload.Key),
 		})
 		if err != nil {
-			logger.Errorf("Failed to download S3 object: %v", err)
+			log.Errorf(i18n.Translate(ctx, "Failed to download S3 object: %v"), err)
 			continue
 		}
 
@@ -79,38 +81,38 @@ func (h *queueHandler) Process(ctx context.Context, msgs *[]sqs.Message) error {
 			Key:    aws.String(payload.Key),
 		})
 		if err != nil {
-			logger.Errorf("failed to download CSV from S3: %v", err)
+			log.Errorf(i18n.Translate(ctx, "failed to download CSV from S3: %v"), err)
 			continue
 		}
-		logger.Infof("Downloaded CSV from S3")
+		log.Infof(i18n.Translate(ctx, "Downloaded CSV from S3"))
 
 		defer getObjOutput.Body.Close()
 
 		outFile, err := os.Create(tmpFile)
 		if err != nil {
-			logger.Errorf("failed to create temp file: %v", err)
+			log.Errorf(i18n.Translate(ctx, "failed to create temp file: %v"), err)
 			continue
 		}
-		logger.Infof("Created temp file to store downloaded CSV")
+		log.Infof(i18n.Translate(ctx, "Created temp file to store downloaded CSV"))
 
 		defer outFile.Close()
 
 		_, err = io.Copy(outFile, getObjOutput.Body)
 		if err != nil {
-			logger.Errorf("failed to write CSV data to file: %v", err)
+			log.Errorf(i18n.Translate(ctx, "failed to write CSV data to file: %v"), err)
 			continue
 		}
 
-		logger.Infof("CSV data written to temp file: %s", tmpFile)
-		logger.Infof("Starting to parse CSV file: %s", tmpFile)
+		log.Infof(i18n.Translate(ctx, "CSV data written to temp file: %s"), tmpFile)
+		log.Infof(i18n.Translate(ctx, "Starting to parse CSV file: %s"), tmpFile)
 
 		// Parse the CSV file
-		err = parse_csv.ParseCSV(tmpFile, ctx, logger, database.Collection)
+		err = parse_csv.ParseCSV(tmpFile, ctx, database.Collection)
 		if err != nil {
-			logger.Errorf("failed to parse CSV file: %v", err)
+			log.Errorf(i18n.Translate(ctx, "failed to parse CSV file: %v"), err)
 			continue
 		}
-		logger.Infof("CSV file parsed successfully : %s", tmpFile)
+		log.Infof(i18n.Translate(ctx, "CSV file parsed successfully : %s"), tmpFile)
 	}
 
 	return nil

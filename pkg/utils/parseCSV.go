@@ -106,7 +106,7 @@ func saveOrder(ctx context.Context, order *models.Order, collection *mongo.Colle
 	return nil
 }
 
-func ParseCSV(tmpFile string, ctx context.Context, logger *log.Logger, collection *mongo.Collection) error {
+func ParseCSV(tmpFile string, ctx context.Context, collection *mongo.Collection) error {
 	csvReader, err := csv.NewCommonCSV(
 		csv.WithBatchSize(100),
 		csv.WithSource(csv.Local),
@@ -115,21 +115,21 @@ func ParseCSV(tmpFile string, ctx context.Context, logger *log.Logger, collectio
 		csv.WithDataRowSanitizers(csv.SanitizeSpace, csv.SanitizeToLower),
 	)
 	if err != nil {
-		logger.Errorf("failed to create CSV reader: %v", err)
+		log.Errorf("failed to create CSV reader: %v", err)
 		return err
 	}
 
 	if err := csvReader.InitializeReader(ctx); err != nil {
-		logger.Errorf("failed to initialize CSV reader: %v", err)
+		log.Errorf("failed to initialize CSV reader: %v", err)
 		return err
 	}
 
 	headers, err := csvReader.GetHeaders()
 	if err != nil {
-		logger.Errorf("failed to read CSV headers: %v", err)
+		log.Errorf("failed to read CSV headers: %v", err)
 		return err
 	}
-	logger.Infof("CSV Headers: %v", headers)
+	log.Infof("CSV Headers: %v", headers)
 
 	colIdx := make(map[string]int)
 	for i, col := range headers {
@@ -141,12 +141,12 @@ func ParseCSV(tmpFile string, ctx context.Context, logger *log.Logger, collectio
 	for !csvReader.IsEOF() {
 		records, err := csvReader.ReadNextBatch()
 		if err != nil {
-			logger.Errorf("failed to read CSV batch: %v", err)
+			log.Errorf("failed to read CSV batch: %v", err)
 			break
 		}
 
 		for _, row := range records {
-			logger.Infof("CSV Row: %v", row)
+			log.Infof("CSV Row: %v", row)
 
 			orderID, _ := uuid.Parse(row[colIdx["order_id"]])
 			skuID, _ := uuid.Parse(row[colIdx["sku_id"]])
@@ -165,13 +165,13 @@ func ParseCSV(tmpFile string, ctx context.Context, logger *log.Logger, collectio
 			}
 
 			if err := ValidateOrder(&order); err != nil {
-				logger.Warnf("Validation failed: %v", err)
+				log.Warnf("Validation failed: %v", err)
 				invalid = append(invalid, row)
 				continue
 			}
 
 			if err := saveOrder(ctx, &order, collection); err != nil {
-				logger.Errorf("Save failed: %v", err)
+				log.Errorf("Save failed: %v", err)
 				invalid = append(invalid, row)
 				continue
 			}
@@ -194,26 +194,26 @@ func ParseCSV(tmpFile string, ctx context.Context, logger *log.Logger, collectio
 			csv.WithWriterDestination(*dest),
 		)
 		if err != nil {
-			logger.Errorf("failed to create CSV writer: %v", err)
+			log.Errorf("failed to create CSV writer: %v", err)
 			return err
 		}
 		defer writer.Close(ctx)
 
 		if err := writer.Initialize(); err != nil {
-			logger.Errorf("failed to initialize CSV writer: %v", err)
+			log.Errorf("failed to initialize CSV writer: %v", err)
 			return err
 		}
 
 		if err := writer.WriteNextBatch(invalid); err != nil {
-			logger.Errorf("failed to write invalid rows: %v", err)
+			log.Errorf("failed to write invalid rows: %v", err)
 			return err
 		}
 
-		logger.Infof("Invalid rows saved to CSV at: %s", filePath)
+		log.Infof("Invalid rows saved to CSV at: %s", filePath)
 
 		publicURL := fmt.Sprintf("http://localhost:8082/%s", filePath)
 
-		logger.Infof("Download invalid CSV here: %s", publicURL)
+		log.Infof("Download invalid CSV here: %s", publicURL)
 	}
 	return nil
 }

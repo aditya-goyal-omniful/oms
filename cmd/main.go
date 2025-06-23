@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/aditya-goyal-omniful/oms/context"
 	"github.com/aditya-goyal-omniful/oms/docs"
 	"github.com/aditya-goyal-omniful/oms/pkg/middlewares"
@@ -10,6 +8,8 @@ import (
 	"github.com/aditya-goyal-omniful/oms/pkg/services"
 	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/http"
+	"github.com/omniful/go_commons/i18n"
+	"github.com/omniful/go_commons/log"
 )
 
 // @title Order Management Service
@@ -44,13 +44,13 @@ func main() {
 		false,
 	)
 
-	server.Use(middlewares.RequestLogger())
+	server.Use(middlewares.RequestLogger(ctx))
 	server.Static("/public", "./public")
 
 	routes.InitServer(server)
 	err := server.StartServer(config.GetString(ctx, "server.name"))
 	if err != nil {
-		log.Fatal("Failed to start server: ", err)
+		log.Panic(i18n.Translate(ctx, "Failed to start server: "), err)
 	}
 
 }
