@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/aditya-goyal-omniful/oms/pkg/database"
 	parse_csv "github.com/aditya-goyal-omniful/oms/pkg/utils"
 	awsS3 "github.com/aws/aws-sdk-go-v2/service/s3"
 
@@ -16,6 +17,7 @@ import (
 )
 
 var consumer *sqs.Consumer
+var err error
 
 func ConsumerInit() {
 	sqsQueue := GetSqs()
@@ -103,7 +105,7 @@ func (h *queueHandler) Process(ctx context.Context, msgs *[]sqs.Message) error {
 		logger.Infof("Starting to parse CSV file: %s", tmpFile)
 
 		// Parse the CSV file
-		err = parse_csv.ParseCSV(tmpFile, ctx, logger, collection)
+		err = parse_csv.ParseCSV(tmpFile, ctx, logger, database.Collection)
 		if err != nil {
 			logger.Errorf("failed to parse CSV file: %v", err)
 			continue

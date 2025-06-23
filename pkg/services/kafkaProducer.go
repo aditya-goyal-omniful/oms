@@ -43,7 +43,7 @@ func PublishOrder(order *entities.Order) {
 	}
 
 	msg := &pubsub.Message{
-		Topic: "my-topic",
+		Topic: "order.created",
 		Key:   fmt.Sprintf("order-%s", order.OrderID), // use %s for UUID
 		Value: jsonBytes,
 		Headers: map[string]string{

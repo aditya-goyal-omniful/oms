@@ -12,6 +12,7 @@ import (
 
 	localContext "github.com/aditya-goyal-omniful/oms/context"
 	localConfig "github.com/aditya-goyal-omniful/oms/pkg/configs"
+	"github.com/aditya-goyal-omniful/oms/pkg/database"
 	"github.com/aditya-goyal-omniful/oms/pkg/services"
 	awsS3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/omniful/go_commons/config"
@@ -39,8 +40,8 @@ func init() {
 	dbname := config.GetString(ctx, "mongo.dbname")
 	collectionName := config.GetString(ctx, "mongo.collectionName")
 
-	localConfig.ConnectDB()                                                  // Connect to MongoDB
-	collection, err = localConfig.GetMongoCollection(dbname, collectionName) //get the collection
+	database.ConnectDB()                                                  // Connect to MongoDB
+	collection, err = database.GetMongoCollection(dbname, collectionName) //get the collection
 	if err != nil {
 		log.Fatal(err)
 	}

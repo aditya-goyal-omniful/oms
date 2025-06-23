@@ -1,4 +1,4 @@
-package configs
+package database
 
 import (
 	"log"
@@ -12,7 +12,7 @@ import (
 
 var mongoClient *mongo.Client
 var err error
-var collection *mongo.Collection
+var Collection *mongo.Collection
 
 func ConnectDB() {
 	ctx := context.GetContext()
@@ -37,7 +37,7 @@ func GetDB() *mongo.Client {
 
 func GetMongoCollection(dbname string, collectionName string) (*mongo.Collection, error) {
 	mongoClient := GetDB()
-	collection = mongoClient.Database(dbname).Collection(collectionName)
+	Collection = mongoClient.Database(dbname).Collection(collectionName)
 	log.Printf("Connected to MongoDB collection: %s in database: %s", collectionName, dbname)
-	return collection, err
+	return Collection, err
 }
