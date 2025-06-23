@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/aditya-goyal-omniful/oms/pkg/helpers"
@@ -9,6 +8,7 @@ import (
 	"github.com/aditya-goyal-omniful/oms/pkg/services"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/omniful/go_commons/http"
 	"github.com/omniful/go_commons/i18n"
 	"github.com/omniful/go_commons/log"
 )
@@ -30,14 +30,14 @@ func CreateOrder(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&order); err != nil {
 		log.WithError(err).Error(i18n.Translate(c, "Invalid JSON:"))
-		c.JSON(http.StatusBadRequest, gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid request body")})
+		c.JSON(int(http.StatusBadRequest), gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid request body")})
 		return
 	}
 
 	tenantIDStr := c.GetHeader("X-Tenant-ID")
 	tenantID, err := uuid.Parse(tenantIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid tenant ID")})
+		c.JSON(int(http.StatusBadRequest), gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid tenant ID")})
 		return
 	}
 
@@ -46,7 +46,7 @@ func CreateOrder(c *gin.Context) {
 	isValid, err := helpers.ValidateSKUAndHubs(c.Request.Context(), order.SKUID, order.HubID, tenantID)
 	if err != nil || !isValid {
 		log.Warnf(i18n.Translate(c, "Invalid SKU or Hub: sku_id=%s, hub_id=%s"), order.SKUID, order.HubID)
-		c.JSON(http.StatusBadRequest, gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid SKU ID or Hub ID")})
+		c.JSON(int(http.StatusBadRequest), gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid SKU ID or Hub ID")})
 		return
 	}
 
@@ -60,7 +60,7 @@ func CreateOrder(c *gin.Context) {
 	// Push to Kafka
 	services.PublishOrder(&order)
 
-	c.JSON(http.StatusAccepted, gin.H{
+	c.JSON(int(http.StatusOK), gin.H{
 		i18n.Translate(c, "message"):  i18n.Translate(c, "Order queued for processing"),
 		i18n.Translate(c, "order_id"): order.OrderID,
 		i18n.Translate(c, "status"):   order.Status,
@@ -85,7 +85,7 @@ func GetOrders(c *gin.Context) {
 	tenantIDStr := c.GetHeader("X-Tenant-ID")
 	_, err := uuid.Parse(tenantIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid X-Tenant-ID")})
+		c.JSON(int(http.StatusBadRequest), gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid X-Tenant-ID")})
 		return
 	}
 
@@ -94,7 +94,7 @@ func GetOrders(c *gin.Context) {
 	if sellerIDStr != "" {
 		sellerID, err = uuid.Parse(sellerIDStr)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid seller_id")})
+			c.JSON(int(http.StatusBadRequest), gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid seller_id")})
 			return
 		}
 	}
@@ -105,14 +105,14 @@ func GetOrders(c *gin.Context) {
 	if s := c.Query("start_date"); s != "" {
 		startDate, err = time.Parse("2006-01-02", s)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid start_date")})
+			c.JSON(int(http.StatusBadRequest), gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid start_date")})
 			return
 		}
 	}
 	if e := c.Query("end_date"); e != "" {
 		endDate, err = time.Parse("2006-01-02", e)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid end_date")})
+			c.JSON(int(http.StatusBadRequest), gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid end_date")})
 			return
 		}
 	}
@@ -120,9 +120,9 @@ func GetOrders(c *gin.Context) {
 	orders, err := helpers.FetchOrders(c.Request.Context(), sellerID, status, startDate, endDate)
 	if err != nil {
 		log.WithError(err).Error(i18n.Translate(c, "Failed to fetch orders:"))
-		c.JSON(http.StatusInternalServerError, gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Failed to fetch orders")})
+		c.JSON(int(http.StatusInternalServerError), gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Failed to fetch orders")})
 		return
 	}
 
-	c.JSON(http.StatusOK, orders)
+	c.JSON(int(http.StatusOK), orders)
 }
