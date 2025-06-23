@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/aditya-goyal-omniful/oms/context"
+	"github.com/aditya-goyal-omniful/oms/docs"
 	"github.com/aditya-goyal-omniful/oms/pkg/middlewares"
 	"github.com/aditya-goyal-omniful/oms/pkg/routes"
 	"github.com/aditya-goyal-omniful/oms/pkg/services"
@@ -11,10 +12,29 @@ import (
 	"github.com/omniful/go_commons/http"
 )
 
+// @title Order Management Service
+// @version 1.0
+// @description This is the OMS for managing orders.
+// @termsOfService http://swagger.io/terms/
+// @contact.name API Support
+// @contact.email support@omniful.com
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @host localhost:8082
+// @BasePath /
+
 func main() {
 	ctx := context.GetContext()
 
 	services.StartOrderRetryWorker()
+
+	// Swagger metadata
+	docs.SwaggerInfo.Title = "Order Management Service"
+	docs.SwaggerInfo.Description = "API documentation for OMS"
+	docs.SwaggerInfo.Version = "1.0"
+	docs.SwaggerInfo.Host = "localhost:8082"
+	docs.SwaggerInfo.BasePath = "/"
+	docs.SwaggerInfo.Schemes = []string{"http"}
 
 	server := http.InitializeServer(
 		config.GetString(ctx, "server.port"),

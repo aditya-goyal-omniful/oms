@@ -1,0 +1,194 @@
+basePath: /
+definitions:
+  entities.BulkOrderRequest:
+    properties:
+      filePath:
+        type: string
+    type: object
+  entities.StoreCSV:
+    properties:
+      filePath:
+        type: string
+    type: object
+  models.Order:
+    properties:
+      hub_id:
+        type: string
+      order_id:
+        type: string
+      price:
+        type: number
+      quantity:
+        type: integer
+      seller_id:
+        type: string
+      sku_id:
+        type: string
+      status:
+        type: string
+    type: object
+host: localhost:8082
+info:
+  contact:
+    email: support@omniful.com
+    name: API Support
+  description: This is the OMS for managing orders.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Order Management Service
+  version: "1.0"
+paths:
+  /orders:
+    get:
+      description: 'Returns all orders for a tenant with optional filters: seller_id,
+        status, and created date range.'
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: UUID of the seller
+        in: query
+        name: seller_id
+        type: string
+      - description: Order status filter (e.g., new_order, on_hold)
+        in: query
+        name: status
+        type: string
+      - description: Filter orders created after this date (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: Filter orders created before this date (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Filtered list of orders
+          schema:
+            items:
+              $ref: '#/definitions/models.Order'
+            type: array
+        "400":
+          description: Invalid query or header values
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to retrieve orders
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List orders with filters
+      tags:
+      - Orders
+    post:
+      consumes:
+      - application/json
+      description: Accepts an order payload, validates SKU and Hub with IMS, sets
+        status to `on_hold`, and publishes to Kafka for further processing.
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Order payload (OrderID optional; generated if missing)
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/models.Order'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted with order_id and status
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid input or missing fields
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error while publishing
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new order (async via Kafka)
+      tags:
+      - Orders
+  /orders/bulkorder:
+    post:
+      consumes:
+      - application/json
+      description: Validates S3 path and pushes message to SQS for processing CSV
+        orders
+      parameters:
+      - description: S3 Path to CSV File
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/entities.BulkOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: Valid Path to s3 !'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'error: Invalid path or S3 bucket missing'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Trigger bulk order creation via S3
+      tags:
+      - Orders
+  /s3/filepath:
+    post:
+      consumes:
+      - application/json
+      description: Accepts file path in JSON and uploads the file to S3
+      parameters:
+      - description: File Path Request
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/entities.StoreCSV'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: File uploaded to S3!'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'error: Failed Parse request or upload failure'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Upload file path to S3 (via localstack)
+      tags:
+      - Orders
+swagger: "2.0"

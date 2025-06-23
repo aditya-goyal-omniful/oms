@@ -9,6 +9,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// StoreInS3 godoc
+// @Summary Upload file path to S3 (via localstack)
+// @Description Accepts file path in JSON and uploads the file to S3
+// @Tags Orders
+// @Accept json
+// @Produce json
+// @Param input body entities.StoreCSV true "File Path Request"
+// @Success 200 {object} map[string]string "message: File uploaded to S3!"
+// @Failure 400 {object} map[string]string "error: Failed Parse request or upload failure"
+// @Router /s3/filepath [post]
 func StoreInS3(c *gin.Context) {
 	var req = &entities.StoreCSV{}
 
@@ -39,7 +49,16 @@ func StoreInS3(c *gin.Context) {
 	})
 }
 
-
+// CreateBulkOrder godoc
+// @Summary Trigger bulk order creation via S3
+// @Description Validates S3 path and pushes message to SQS for processing CSV orders
+// @Tags Orders
+// @Accept json
+// @Produce json
+// @Param input body entities.BulkOrderRequest true "S3 Path to CSV File"
+// @Success 200 {object} map[string]string "message: Valid Path to s3 !"
+// @Failure 400 {object} map[string]string "error: Invalid path or S3 bucket missing"
+// @Router /orders/bulkorder [post]
 func CreateBulkOrder(c *gin.Context) {
 	var req = &entities.BulkOrderRequest{}
 	err := c.ShouldBindBodyWithJSON(&req)

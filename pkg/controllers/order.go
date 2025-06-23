@@ -14,15 +14,15 @@ import (
 
 // CreateOrder godoc
 // @Summary Create a new order (async via Kafka)
-// @Description Accepts a new order, validates SKU/Hub, pushes to Kafka for processing.
+// @Description Accepts an order payload, validates SKU and Hub with IMS, sets status to `on_hold`, and publishes to Kafka for further processing.
 // @Tags Orders
 // @Accept json
 // @Produce json
 // @Param X-Tenant-ID header string true "Tenant ID"
-// @Param order body models.Order true "Order payload"
+// @Param order body models.Order true "Order payload (OrderID optional; generated if missing)"
 // @Success 202 {object} map[string]interface{} "Accepted with order_id and status"
-// @Failure 400 {object} map[string]string "Bad Request"
-// @Failure 500 {object} map[string]string "Internal Server Error"
+// @Failure 400 {object} map[string]string "Invalid input or missing fields"
+// @Failure 500 {object} map[string]string "Internal server error while publishing"
 // @Router /orders [post]
 func CreateOrder(c *gin.Context) {
 	var order models.Order
@@ -68,17 +68,17 @@ func CreateOrder(c *gin.Context) {
 
 // GetOrders godoc
 // @Summary List orders with filters
-// @Description Retrieve orders with optional filters for seller ID, status, and date range.
+// @Description Returns all orders for a tenant with optional filters: seller_id, status, and created date range.
 // @Tags Orders
 // @Produce json
 // @Param X-Tenant-ID header string true "Tenant ID"
-// @Param seller_id query string false "UUID of the seller to filter orders"
-// @Param status query string false "Order status to filter (e.g., new_order, on_hold)"
-// @Param start_date query string false "Filter orders created on/after this date (YYYY-MM-DD)"
-// @Param end_date query string false "Filter orders created on/before this date (YYYY-MM-DD)"
-// @Success 200 {array} models.Order "List of orders"
-// @Failure 400 {object} map[string]string "Bad Request"
-// @Failure 500 {object} map[string]string "Internal Server Error"
+// @Param seller_id query string false "UUID of the seller"
+// @Param status query string false "Order status filter (e.g., new_order, on_hold)"
+// @Param start_date query string false "Filter orders created after this date (YYYY-MM-DD)"
+// @Param end_date query string false "Filter orders created before this date (YYYY-MM-DD)"
+// @Success 200 {array} models.Order "Filtered list of orders"
+// @Failure 400 {object} map[string]string "Invalid query or header values"
+// @Failure 500 {object} map[string]string "Failed to retrieve orders"
 // @Router /orders [get]
 func GetOrders(c *gin.Context) {
 	tenantIDStr := c.GetHeader("X-Tenant-ID")
