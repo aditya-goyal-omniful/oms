@@ -1,4 +1,4 @@
-package models
+package entities
 
 import (
 	"bytes"
@@ -14,6 +14,7 @@ import (
 	localConfig "github.com/aditya-goyal-omniful/oms/pkg/configs"
 	"github.com/aditya-goyal-omniful/oms/pkg/database"
 	"github.com/aditya-goyal-omniful/oms/pkg/services"
+
 	awsS3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/sqs"

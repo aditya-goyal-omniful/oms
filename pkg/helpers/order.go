@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/aditya-goyal-omniful/oms/pkg/database"
-	"github.com/aditya-goyal-omniful/oms/pkg/entities"
+	"github.com/aditya-goyal-omniful/oms/pkg/models"
 	"github.com/google/uuid"
 	"github.com/omniful/go_commons/httpclient"
 	"github.com/omniful/go_commons/httpclient/request"
@@ -38,7 +38,7 @@ func UpdateOrderStatus(orderID uuid.UUID, status string) error {
 	return err
 }
 
-func CheckAndUpdateOrder(ctx context.Context, order entities.Order) {
+func CheckAndUpdateOrder(ctx context.Context, order models.Order) {
 	payload := map[string]interface{}{
 		"sku_id":   order.SKUID,
 		"hub_id":   order.HubID,
@@ -75,8 +75,8 @@ func CheckAndUpdateOrder(ctx context.Context, order entities.Order) {
 	}
 }
 
-func GetOnHoldOrders(ctx context.Context) ([]entities.Order, error) {
-	var orders []entities.Order
+func GetOnHoldOrders(ctx context.Context) ([]models.Order, error) {
+	var orders []models.Order
 
 	cursor, err := database.Collection.Find(ctx, bson.M{"status": "on_hold"})
 	if err != nil {
@@ -85,7 +85,7 @@ func GetOnHoldOrders(ctx context.Context) ([]entities.Order, error) {
 	defer cursor.Close(ctx)
 
 	for cursor.Next(ctx) {
-		var order entities.Order
+		var order models.Order
 		if err := cursor.Decode(&order); err != nil {
 			continue
 		}
@@ -95,7 +95,7 @@ func GetOnHoldOrders(ctx context.Context) ([]entities.Order, error) {
 	return orders, nil
 }
 
-func FetchOrders(ctx context.Context, sellerID uuid.UUID, status string, startDate, endDate time.Time) ([]entities.Order, error) {
+func FetchOrders(ctx context.Context, sellerID uuid.UUID, status string, startDate, endDate time.Time) ([]models.Order, error) {
 	filter := bson.M{}
 
 	if sellerID != uuid.Nil {
@@ -128,9 +128,9 @@ func FetchOrders(ctx context.Context, sellerID uuid.UUID, status string, startDa
 	}
 	defer cursor.Close(ctx)
 
-	var orders []entities.Order
+	var orders []models.Order
 	for cursor.Next(ctx) {
-		var o entities.Order
+		var o models.Order
 		if err := cursor.Decode(&o); err != nil {
 			log.Warnf("Failed to decode order: %v", err)
 			continue

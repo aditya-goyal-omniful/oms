@@ -5,12 +5,12 @@ import (
 	"io"
 	"log"
 
-	"github.com/aditya-goyal-omniful/oms/pkg/models"
+	"github.com/aditya-goyal-omniful/oms/pkg/entities"
 	"github.com/gin-gonic/gin"
 )
 
 func StoreInS3(c *gin.Context) {
-	var req = &models.StoreCSV{}
+	var req = &entities.StoreCSV{}
 
 	body, _ := c.GetRawData()
 	log.Println("Raw Body:", string(body))
@@ -27,7 +27,7 @@ func StoreInS3(c *gin.Context) {
 
 	log.Println("Parsed filePath:", req.FilePath)
 
-	err := models.StoreInS3(req)
+	err := entities.StoreInS3(req)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": "Failed to upload to s3",
@@ -41,7 +41,7 @@ func StoreInS3(c *gin.Context) {
 
 
 func CreateBulkOrder(c *gin.Context) {
-	var req = &models.BulkOrderRequest{}
+	var req = &entities.BulkOrderRequest{}
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -49,7 +49,7 @@ func CreateBulkOrder(c *gin.Context) {
 		})
 		return
 	}
-	err = models.ValidateAndPushToSQS(req)
+	err = entities.ValidateAndPushToSQS(req)
 
 	if err != nil {
 		c.JSON(400, gin.H{

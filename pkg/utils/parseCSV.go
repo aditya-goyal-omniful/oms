@@ -10,7 +10,7 @@ import (
 	nethttp "net/http"
 
 	localContext "github.com/aditya-goyal-omniful/oms/context"
-	"github.com/aditya-goyal-omniful/oms/pkg/entities"
+	"github.com/aditya-goyal-omniful/oms/pkg/models"
 	"github.com/aditya-goyal-omniful/oms/pkg/services"
 	"github.com/google/uuid"
 	"github.com/omniful/go_commons/config"
@@ -66,7 +66,7 @@ func ValidateWithIMS(hubID, skuID uuid.UUID) bool {
 	return response.IsValid
 }
 
-func ValidateOrder(order *entities.Order) error {
+func ValidateOrder(order *models.Order) error {
 	if order.OrderID == uuid.Nil {
 		return errors.New("invalid OrderID")
 	}
@@ -94,7 +94,7 @@ func ValidateOrder(order *entities.Order) error {
 	return nil
 }
 
-func saveOrder(ctx context.Context, order *entities.Order, collection *mongo.Collection) error {
+func saveOrder(ctx context.Context, order *models.Order, collection *mongo.Collection) error {
 	log.Infof("Attempting to insert order into DB: %+v", order)
 	order.Status = "on_hold"
 	_, err := collection.InsertOne(ctx, order)
@@ -155,7 +155,7 @@ func ParseCSV(tmpFile string, ctx context.Context, logger *log.Logger, collectio
 			price, _ := strconv.ParseFloat(row[colIdx["price"]], 64)
 			quantity, _ := strconv.Atoi(row[colIdx["quantity"]])
 
-			order := entities.Order{
+			order := models.Order{
 				OrderID:  orderID,
 				SKUID:    skuID,
 				HubID:    hubID,

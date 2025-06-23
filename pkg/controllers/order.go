@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aditya-goyal-omniful/oms/pkg/entities"
 	"github.com/aditya-goyal-omniful/oms/pkg/helpers"
+	"github.com/aditya-goyal-omniful/oms/pkg/models"
 	"github.com/aditya-goyal-omniful/oms/pkg/services"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -19,13 +19,13 @@ import (
 // @Accept json
 // @Produce json
 // @Param X-Tenant-ID header string true "Tenant ID"
-// @Param order body entities.Order true "Order payload"
+// @Param order body models.Order true "Order payload"
 // @Success 202 {object} map[string]interface{} "Accepted with order_id and status"
 // @Failure 400 {object} map[string]string "Bad Request"
 // @Failure 500 {object} map[string]string "Internal Server Error"
 // @Router /orders [post]
 func CreateOrder(c *gin.Context) {
-	var order entities.Order
+	var order models.Order
 
 	if err := c.ShouldBindJSON(&order); err != nil {
 		log.Errorf("Invalid JSON: %v", err)
@@ -76,7 +76,7 @@ func CreateOrder(c *gin.Context) {
 // @Param status query string false "Order status to filter (e.g., new_order, on_hold)"
 // @Param start_date query string false "Filter orders created on/after this date (YYYY-MM-DD)"
 // @Param end_date query string false "Filter orders created on/before this date (YYYY-MM-DD)"
-// @Success 200 {array} entities.Order "List of orders"
+// @Success 200 {array} models.Order "List of orders"
 // @Failure 400 {object} map[string]string "Bad Request"
 // @Failure 500 {object} map[string]string "Internal Server Error"
 // @Router /orders [get]

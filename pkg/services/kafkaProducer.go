@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/aditya-goyal-omniful/oms/pkg/entities"
+	"github.com/aditya-goyal-omniful/oms/pkg/models"
 	"github.com/omniful/go_commons/kafka"
 	"github.com/omniful/go_commons/log"
 	"github.com/omniful/go_commons/pubsub"
@@ -34,7 +34,7 @@ func CloseKafkaProducer() {
 	}
 }
 
-func PublishOrder(order *entities.Order) {
+func PublishOrder(order *models.Order) {
 	// Marshal order into JSON
 	jsonBytes, err := json.Marshal(order)
 	if err != nil {

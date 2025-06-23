@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/aditya-goyal-omniful/oms/pkg/entities"
 	"github.com/aditya-goyal-omniful/oms/pkg/helpers"
+	"github.com/aditya-goyal-omniful/oms/pkg/models"
 	"github.com/omniful/go_commons/kafka"
 	"github.com/omniful/go_commons/log"
 	"github.com/omniful/go_commons/pubsub"
@@ -64,7 +64,7 @@ func ReceiveOrder() {
 }
 
 func (h *MessageHandler) Handle(ctx context.Context, msg *pubsub.Message) error {
-	var order entities.Order
+	var order models.Order
 	err := json.Unmarshal(msg.Value, &order)
 	if err != nil {
 		log.Errorf("Failed to unmarshal Kafka message: %v", err)
@@ -72,11 +72,5 @@ func (h *MessageHandler) Handle(ctx context.Context, msg *pubsub.Message) error 
 	}
 
 	helpers.CheckAndUpdateOrder(ctx, order)
-
-	// for _, order := range orders {
-	// 	helpers.CheckAndUpdateOrder(ctx, order)
-	// }
-
-
 	return nil
 }
