@@ -1,9 +1,28 @@
 package middlewares
 
-// func LoggingMiddleware(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		tenantID := r.Header.Get("X-Tenant-ID")
-// 		log.Infof("Incoming request: %s %s | Tenant: %s", r.Method, r.URL.Path, tenantID)
-// 		next.ServeHTTP(w, r)
-// 	})
-// }
+import (
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/omniful/go_commons/log"
+)
+
+func RequestLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+
+		path := c.Request.URL.Path
+		raw := c.Request.URL.RawQuery
+		method := c.Request.Method
+		tenantID := c.GetHeader("X-Tenant-ID")
+
+		// Proceed to next handler
+		c.Next()
+
+		latency := time.Since(start)
+		statusCode := c.Writer.Status()
+
+		log.Infof("Method=%s Path=%s Query=%s Status=%d Latency=%s TenantID=%s",
+			method, path, raw, statusCode, latency, tenantID)
+	}
+}

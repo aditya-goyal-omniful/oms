@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/aditya-goyal-omniful/oms/context"
+	"github.com/aditya-goyal-omniful/oms/pkg/middlewares"
 	"github.com/aditya-goyal-omniful/oms/pkg/routes"
 	"github.com/aditya-goyal-omniful/oms/pkg/services"
 	"github.com/omniful/go_commons/config"
@@ -23,6 +24,7 @@ func main() {
 		false,
 	)
 
+	server.Use(middlewares.RequestLogger())
 	server.Static("/public", "./public")
 
 	routes.InitServer(server)
