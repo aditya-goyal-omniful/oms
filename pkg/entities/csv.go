@@ -5,20 +5,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"time"
 
 	"strings"
 
 	localContext "github.com/aditya-goyal-omniful/oms/context"
 	localConfig "github.com/aditya-goyal-omniful/oms/pkg/configs"
 	"github.com/aditya-goyal-omniful/oms/pkg/database"
-	"github.com/aditya-goyal-omniful/oms/pkg/services"
+	"github.com/aditya-goyal-omniful/oms/pkg/initializers"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	awsS3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/omniful/go_commons/config"
+	"github.com/omniful/go_commons/log"
 	"github.com/omniful/go_commons/sqs"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type StoreCSV struct {
@@ -29,43 +28,27 @@ type BulkOrderRequest struct {
 	FilePath string `json:"filePath"`
 }
 
-var mongoClinet *mongo.Client
 var err error
-var client *awsS3.Client //  this is being returned to me by s3.NewDefaultAWSS3Client() of gocommons
+var client *awsS3.Client 			// Returned by s3.NewDefaultAWSS3Client() (go_commons)
 var ctx context.Context
 var collection *mongo.Collection
-var publisher *sqs.Publisher // Publisher for SQS messages
+var publisher *sqs.Publisher
 
 func init() {
+	initializers.InitServices()
+
 	ctx = localContext.GetContext()
 	dbname := config.GetString(ctx, "mongo.dbname")
-	collectionName := config.GetString(ctx, "mongo.collectionName")
+	collectionName := config.GetString(ctx, "mongo.collectionName") 
 
-	database.ConnectDB()                                                  // Connect to MongoDB
-	collection, err = database.GetMongoCollection(dbname, collectionName) //get the collection
+	collection, err = database.GetMongoCollection(dbname, collectionName) 	// Get Mongo Collection
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
-	localConfig.ConnectS3()            // Initialize S3 client
-	client = localConfig.GetS3Client() //get s3 client
+	client = localConfig.GetS3Client() 			// Get S3 Client
 
-	localConfig.SQSInit()            // Initialize SQS client
-	newQueue := localConfig.GetSqs() // Get the SQS queue
-
-	localConfig.PublisherInit(newQueue)    // Initialize SQS Publisher
-	publisher = localConfig.GetPublisher() // get Publisher
-
-	localConfig.ConsumerInit()     // Initialize SQS Consumer
-	localConfig.StartConsumer(ctx) // Start the SQS consumer for processing CSV files
-
-	go services.InitKafkaConsumer() // Initialize Kafka Producer
-	
-	// Sleep to allow consumer to initialize
-	time.Sleep(3 * time.Second)
-
-	// Then produce messages
-	services.InitKafkaProducer()
+	publisher = localConfig.GetPublisher() 		// Get Publisher
 }
 
 func StoreInS3(s *StoreCSV) error {
