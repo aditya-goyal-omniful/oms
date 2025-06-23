@@ -25,17 +25,6 @@ services:
     ports:
       - "9092:9092"
 
-  # MongoDB
-  # mongodb:
-  #   image: mongo:6
-  #   container_name: oms-mongo
-  #   ports:
-  #     - "27017:27017"
-  #   volumes:
-  #     - mongodb_data:/data/db
-  #   environment:
-  #     MONGO_INITDB_DATABASE: oms
-
   # Redis
   redis:
     image: redis:7-alpine

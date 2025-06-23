@@ -6,18 +6,8 @@ import (
 )
 
 func InitServer(server *http.Server) {
-	server.GET("/", controllers.ServeHome)
-
-	v1 := server.Engine.Group("/api/v1")
-	{
-		orders := v1.Group("/order") 				// Contains csv file path
-		{
-			orders.POST("/bulkorder", controllers.CreateBulkOrder)
-		}
-
-		csv := v1.Group("/csv")
-		{
-			csv.POST("/filepath", controllers.StoreInS3)
-		}
-	}
+	server.POST("/orderS/bulkorder", controllers.CreateBulkOrder)
+	server.POST("/s3/filepath", controllers.StoreInS3)
+	server.POST("/orders", controllers.CreateOrder)
+	server.GET("/orders", controllers.GetOrders)
 }

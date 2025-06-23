@@ -2,6 +2,9 @@ package helpers
 
 import (
 	"context"
+	"fmt"
+	"net/url"
+	"time"
 
 	"github.com/aditya-goyal-omniful/oms/pkg/database"
 	"github.com/aditya-goyal-omniful/oms/pkg/entities"
@@ -17,8 +20,6 @@ var client httpclient.Client
 func InitHTTPClient() {
 	client = httpclient.New("http://localhost:8087")
 }
-
-
 
 func UpdateOrderStatus(orderID uuid.UUID, status string) error {
 	ctx := context.TODO()
@@ -92,4 +93,92 @@ func GetOnHoldOrders(ctx context.Context) ([]entities.Order, error) {
 	}
 
 	return orders, nil
+}
+
+func FetchOrders(ctx context.Context, sellerID uuid.UUID, status string, startDate, endDate time.Time) ([]entities.Order, error) {
+	filter := bson.M{}
+
+	if sellerID != uuid.Nil {
+		filter["seller_id"] = sellerID
+	}
+	if status != "" {
+		filter["status"] = status
+	}
+	if !startDate.IsZero() || !endDate.IsZero() {
+		dateRange := bson.M{}
+		if !startDate.IsZero() {
+			dateRange["$gte"] = startDate
+		}
+		if !endDate.IsZero() {
+			dateRange["$lte"] = endDate
+		}
+		filter["created_at"] = dateRange
+	}
+
+	collection, err := database.GetMongoCollection("oms", "orders")
+	if err != nil {
+		log.Errorf("MongoDB collection error: %v", err)
+		return nil, err
+	}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		log.Errorf("MongoDB query error: %v", err)
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var orders []entities.Order
+	for cursor.Next(ctx) {
+		var o entities.Order
+		if err := cursor.Decode(&o); err != nil {
+			log.Warnf("Failed to decode order: %v", err)
+			continue
+		}
+		orders = append(orders, o)
+	}
+
+	return orders, nil
+}
+
+func ValidateSKUAndHubs(ctx context.Context, skuID, hubID, tenantID uuid.UUID) (bool, error) {
+	// Set up headers with tenant ID
+	headers := url.Values{}
+	headers.Set("X-Tenant-ID", tenantID.String())
+
+	// Validate SKU
+	skuReq, err := request.NewBuilder().
+		SetUri(fmt.Sprintf("/skus/%s", skuID)).
+		SetMethod("GET").
+		SetHeaders(headers).
+		Build()
+	if err != nil {
+		log.Warnf("Failed to build SKU request: %v", err)
+		return false, err
+	}
+
+	skuResp, err := client.Send(ctx, skuReq)
+	if err != nil || skuResp.StatusCode() != 200 {
+		log.Warnf("SKU validation failed: %v", err)
+		return false, nil
+	}
+
+	// Validate Hub
+	hubReq, err := request.NewBuilder().
+		SetUri(fmt.Sprintf("/hubs/%s", hubID)).
+		SetMethod("GET").
+		SetHeaders(headers).
+		Build()
+	if err != nil {
+		log.Warnf("Failed to build Hub request: %v", err)
+		return false, err
+	}
+
+	hubResp, err := client.Send(ctx, hubReq)
+	if err != nil || hubResp.StatusCode() != 200 {
+		log.Warnf("Hub validation failed: %v", err)
+		return false, nil
+	}
+
+	return true, nil
 }
