@@ -1,33 +1,38 @@
 package initializers
 
 import (
+	"context"
 	"time"
 
-	localContext "github.com/aditya-goyal-omniful/oms/context"
 	localConfig "github.com/aditya-goyal-omniful/oms/pkg/configs"
+	"github.com/aditya-goyal-omniful/oms/pkg/controllers"
 	"github.com/aditya-goyal-omniful/oms/pkg/database"
+	"github.com/aditya-goyal-omniful/oms/pkg/entities"
 	"github.com/aditya-goyal-omniful/oms/pkg/services"
 )
 
-func InitServices() {
-	ctx := localContext.GetContext()
+func InitServices(ctx context.Context) {
+	database.ConnectDB() 							// Initialize Mongo Client
 
-	database.ConnectDB() 
+	services.InitRedis(ctx)							// Initialize Redis
 
-	services.InitRedis(ctx)
+	localConfig.ConnectS3(ctx) 						// Initialize S3 client
 
-	localConfig.ConnectS3(ctx) 				// Initialize S3 client
-
-	localConfig.SQSInit()   				// Initialize SQS client
+	localConfig.SQSInit()   						// Initialize SQS client
 	newQueue := localConfig.GetSqs() 
 
 	localConfig.PublisherInit(ctx, newQueue)    	// Initialize SQS Publisher
-	localConfig.ConsumerInit(ctx)     		   	// Initialize SQS Consumer
-	localConfig.StartConsumer(ctx) 			// Start the SQS consumer for processing CSV files
+	localConfig.ConsumerInit(ctx)     		   		// Initialize SQS Consumer
+	localConfig.StartConsumer(ctx) 					// Start the SQS consumer for processing CSV files
 
-	go services.InitKafkaConsumer(ctx) 		// Initialize Kafka Producer
+	entities.InitCSV(ctx)							// Initialize Order Mongo Collection
 
-	time.Sleep(3 * time.Second)				// Sleep to allow consumer to initialize
+	go services.InitKafkaConsumer(ctx) 				// Initialize Kafka Producer
 
-	services.InitKafkaProducer(ctx)			// Then produce messages
+	time.Sleep(3 * time.Second)						// Sleep to allow consumer to initialize
+
+	services.InitKafkaProducer(ctx)					// Then produce messages
+	services.StartOrderRetryWorker()
+
+	controllers.InitWebhook(ctx)					// Initialize Webhook Mongo Collection
 }

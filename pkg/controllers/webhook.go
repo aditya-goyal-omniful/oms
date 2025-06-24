@@ -13,7 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	localContext "github.com/aditya-goyal-omniful/oms/context"
 	"github.com/aditya-goyal-omniful/oms/pkg/database"
 	"github.com/aditya-goyal-omniful/oms/pkg/models"
 	"github.com/aditya-goyal-omniful/oms/pkg/services"
@@ -27,8 +26,7 @@ type WebhookRegisterRequest struct {
 	URL string `json:"url" binding:"required,url"`
 }
 
-func init() {
-	ctx = localContext.GetContext()
+func InitWebhook(ctx context.Context) {
 	dbname := config.GetString(ctx, "mongo.dbname")
 	collectionName := config.GetString(ctx, "mongo.webhookCollectionName") 
 

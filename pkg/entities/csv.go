@@ -8,10 +8,8 @@ import (
 
 	"strings"
 
-	localContext "github.com/aditya-goyal-omniful/oms/context"
 	localConfig "github.com/aditya-goyal-omniful/oms/pkg/configs"
 	"github.com/aditya-goyal-omniful/oms/pkg/database"
-	"github.com/aditya-goyal-omniful/oms/pkg/initializers"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	awsS3 "github.com/aws/aws-sdk-go-v2/service/s3"
@@ -35,10 +33,7 @@ var ctx context.Context
 var collection *mongo.Collection
 var publisher *sqs.Publisher
 
-func init() {
-	initializers.InitServices()
-
-	ctx = localContext.GetContext()
+func InitCSV(ctx context.Context) {
 	dbname := config.GetString(ctx, "mongo.dbname")
 	collectionName := config.GetString(ctx, "mongo.collectionName") 
 

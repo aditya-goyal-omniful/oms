@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/aditya-goyal-omniful/oms/context"
 	"github.com/aditya-goyal-omniful/oms/docs"
+	"github.com/aditya-goyal-omniful/oms/pkg/initializers"
 	"github.com/aditya-goyal-omniful/oms/pkg/middlewares"
 	"github.com/aditya-goyal-omniful/oms/pkg/routes"
-	"github.com/aditya-goyal-omniful/oms/pkg/services"
 	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/http"
 	"github.com/omniful/go_commons/i18n"
@@ -26,7 +26,7 @@ import (
 func main() {
 	ctx := context.GetContext()
 
-	services.StartOrderRetryWorker()
+	initializers.InitServices(ctx)
 
 	// Swagger metadata
 	docs.SwaggerInfo.Title = "Order Management Service"
