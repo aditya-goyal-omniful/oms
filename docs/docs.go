@@ -246,6 +246,40 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/webhooks/register": {
+            "post": {
+                "description": "Save a webhook URL for a tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Webhook"
+                ],
+                "summary": "Register a webhook",
+                "parameters": [
+                    {
+                        "description": "Webhook Payload",
+                        "name": "webhook",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Webhook"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Webhook"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -268,6 +302,9 @@ const docTemplate = `{
         "models.Order": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string"
+                },
                 "hub_id": {
                     "type": "string"
                 },
@@ -287,6 +324,29 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
+                    "type": "string"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Webhook": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "tenantID": {
+                    "type": "string"
+                },
+                "url": {
                     "type": "string"
                 }
             }

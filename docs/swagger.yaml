@@ -12,6 +12,8 @@ definitions:
     type: object
   models.Order:
     properties:
+      created_at:
+        type: string
       hub_id:
         type: string
       order_id:
@@ -25,6 +27,21 @@ definitions:
       sku_id:
         type: string
       status:
+        type: string
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.Webhook:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      tenantID:
+        type: string
+      url:
         type: string
     type: object
 host: localhost:8082
@@ -191,4 +208,26 @@ paths:
       summary: Upload file path to S3 (via localstack)
       tags:
       - Orders
+  /webhooks/register:
+    post:
+      consumes:
+      - application/json
+      description: Save a webhook URL for a tenant
+      parameters:
+      - description: Webhook Payload
+        in: body
+        name: webhook
+        required: true
+        schema:
+          $ref: '#/definitions/models.Webhook'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Webhook'
+      summary: Register a webhook
+      tags:
+      - Webhook
 swagger: "2.0"

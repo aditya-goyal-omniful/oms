@@ -38,6 +38,15 @@ func init() {
 	}
 }
 
+// RegisterWebhook godoc
+// @Summary Register a webhook
+// @Description Save a webhook URL for a tenant
+// @Tags Webhook
+// @Accept json
+// @Produce json
+// @Param webhook body models.Webhook true "Webhook Payload"
+// @Success 201 {object} models.Webhook
+// @Router /webhooks/register [post]
 func RegisterWebhook(c *gin.Context) {
 	var req WebhookRegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
