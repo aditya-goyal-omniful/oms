@@ -12,13 +12,13 @@ import (
 )
 
 func InitServices(ctx context.Context) {
-	database.ConnectDB() 							// Initialize Mongo Client
+	database.ConnectDB(ctx) 							// Initialize Mongo Client
 
 	services.InitRedis(ctx)							// Initialize Redis
 
 	localConfig.ConnectS3(ctx) 						// Initialize S3 client
 
-	localConfig.SQSInit()   						// Initialize SQS client
+	localConfig.SQSInit(ctx)   						// Initialize SQS client
 	newQueue := localConfig.GetSqs() 
 
 	localConfig.PublisherInit(ctx, newQueue)    	// Initialize SQS Publisher

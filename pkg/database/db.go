@@ -1,7 +1,9 @@
 package database
 
 import (
-	"github.com/aditya-goyal-omniful/oms/context"
+	"context"
+
+	localContext "github.com/aditya-goyal-omniful/oms/context"
 	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/i18n"
 	"github.com/omniful/go_commons/log"
@@ -14,9 +16,9 @@ var mongoClient *mongo.Client
 var err error
 var Collection *mongo.Collection
 
-func ConnectDB() {
-	ctx := context.GetContext()
+func ConnectDB(ctx context.Context) {
 	log.Infof(i18n.Translate(ctx, "Connecting to MongoDB..."))
+
 	mongoURI := config.GetString(ctx, "mongo.uri")
 	mongoClient, err = mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))
 	if err != nil {
@@ -36,7 +38,7 @@ func GetDB() *mongo.Client {
 }
 
 func GetMongoCollection(dbname string, collectionName string) (*mongo.Collection, error) {
-	ctx := context.GetContext()
+	ctx := localContext.GetContext()
 	mongoClient := GetDB()
 
 	Collection = mongoClient.Database(dbname).Collection(collectionName)

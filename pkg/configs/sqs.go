@@ -1,7 +1,8 @@
 package configs
 
 import (
-	"github.com/aditya-goyal-omniful/oms/context"
+	"context"
+
 	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/i18n"
 	"github.com/omniful/go_commons/log"
@@ -10,12 +11,8 @@ import (
 
 var newQueue *sqs.Queue
 
-func SQSInit() {
-
-	ctx := context.GetContext()
-
+func SQSInit(ctx context.Context) {
 	log.Infof(i18n.Translate(ctx, "Initializing SQS Queue"))
-
 
 	region := config.GetString(ctx, "aws.region")
 	account := config.GetString(ctx, "aws.account")
