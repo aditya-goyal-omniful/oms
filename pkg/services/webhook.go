@@ -21,7 +21,7 @@ var (
 )
 
 func InitRedis(ctx context.Context) {
-	log.Infof("Initializing Redis...")
+	log.Infof(i18n.Translate(ctx, "Initializing Redis..."))
 	config := &redis.Config{
 		Hosts:        []string{"localhost:6379"},
 		PoolSize:     50,
@@ -51,6 +51,8 @@ func GetCachedWebhookURL(ctx context.Context, tenantID string) string {
 }
 
 func NotifyTenantWebhook(ctx context.Context, tenantID string, payload interface{}) {
+	log.Infof(i18n.Translate(ctx, "Preparing to notify tenant webhook for TenantID=%s"), tenantID)
+
 	urlStr := GetCachedWebhookURL(ctx, tenantID)
 	if urlStr == "" {
 		var wh models.Webhook
@@ -78,8 +80,12 @@ func NotifyTenantWebhook(ctx context.Context, tenantID string, payload interface
 		return
 	}
 
+	log.Infof(i18n.Translate(ctx, "Sending webhook to TenantID=%s at URL=%s"), tenantID, urlStr)
+
 	_, err = client.Post(ctx, req)
 	if err != nil {
 		log.Error(i18n.Translate(ctx, "Failed to send webhook to ") + urlStr, err)
 	}
+
+	log.Infof(i18n.Translate(ctx, "Successfully sent webhook for TenantID=%s to URL=%s"), tenantID, urlStr)
 }

@@ -77,7 +77,7 @@ func (h *MessageHandler) Handle(ctx context.Context, msg *pubsub.Message) error 
 
 	tenantID := msg.Headers["X-Tenant-ID"]
 	if tenantID == "" {
-		log.Warnf("TenantID not found in Kafka headers")
+		log.Warnf(i18n.Translate(ctx, "TenantID not found in Kafka headers"))
 	} else {
 		NotifyTenantWebhook(ctx, tenantID, order)
 	}

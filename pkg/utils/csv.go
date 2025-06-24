@@ -73,6 +73,7 @@ func ParseCSV(tmpFile string, ctx context.Context, collection *mongo.Collection)
 			skuID, _ := uuid.Parse(row[colIdx["sku_id"]])
 			hubID, _ := uuid.Parse(row[colIdx["hub_id"]])
 			sellerID, _ := uuid.Parse(row[colIdx["seller_id"]])
+			tenantID, _ := uuid.Parse(row[colIdx["tenant_id"]])
 			price, _ := strconv.ParseFloat(row[colIdx["price"]], 64)
 			quantity, _ := strconv.Atoi(row[colIdx["quantity"]])
 
@@ -81,11 +82,14 @@ func ParseCSV(tmpFile string, ctx context.Context, collection *mongo.Collection)
 				SKUID:    skuID,
 				HubID:    hubID,
 				SellerID: sellerID,
+				TenantID: tenantID,
 				Price:    price,
 				Quantity: quantity,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
 			}
 
-			if err := ValidateOrder(&order); err != nil {
+			if err := ValidateOrder(ctx, &order); err != nil {
 				log.Warnf(i18n.Translate(ctx, "Validation failed: %v"), err)
 				invalid = append(invalid, row)
 				continue
@@ -97,12 +101,7 @@ func ParseCSV(tmpFile string, ctx context.Context, collection *mongo.Collection)
 				continue
 			}
 
-			tenantID := ctx.Value("X-Tenant-ID")
-			if tenantIDStr, ok := tenantID.(string); ok && tenantIDStr != "" {
-				services.PublishOrder(&order, tenantIDStr)
-			} else {
-				log.Warnf("Tenant ID missing from context while publishing order: OrderID=%s", order.OrderID)
-			}
+			services.PublishOrder(&order, tenantID.String())
 		}
 	}
 

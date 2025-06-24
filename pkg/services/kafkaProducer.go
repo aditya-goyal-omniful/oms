@@ -14,8 +14,8 @@ import (
 
 var kafkaProducer *kafka.ProducerClient
 
-func InitKafkaProducer() {
-	log.Println("Initializing Kafka producer")
+func InitKafkaProducer(ctx context.Context) {
+	log.Infof(i18n.Translate(ctx, "Initializing Kafka producer"))
 
 	kafkaProducer = kafka.NewProducer(
 		kafka.WithBrokers([]string{"localhost:9092"}),
@@ -28,9 +28,9 @@ func GetKafkaProducer() *kafka.ProducerClient {
 	return kafkaProducer
 }
 
-func CloseKafkaProducer() {
+func CloseKafkaProducer(ctx context.Context) {
 	if kafkaProducer != nil {
-		log.Println("Closing Kafka producer")
+		log.Infof(i18n.Translate(ctx, "Closing Kafka producer"))
 		kafkaProducer.Close()
 	}
 }

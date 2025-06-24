@@ -29,5 +29,5 @@ func InitServices() {
 
 	time.Sleep(3 * time.Second)				// Sleep to allow consumer to initialize
 
-	services.InitKafkaProducer()			// Then produce messages
+	services.InitKafkaProducer(ctx)			// Then produce messages
 }

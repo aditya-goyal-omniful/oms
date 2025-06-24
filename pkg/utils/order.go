@@ -46,7 +46,7 @@ func init() {
 }
 
 
-func ValidateWithIMS(hubID, skuID uuid.UUID) bool {
+func ValidateWithIMS(ctx context.Context, hubID, skuID uuid.UUID) bool {
 	req := &http.Request{
 		Url: fmt.Sprintf("validators/validate_order/%s/%s", hubID, skuID),
 		Headers: map[string][]string{
@@ -58,7 +58,7 @@ func ValidateWithIMS(hubID, skuID uuid.UUID) bool {
 	var response ValidationResponse
 	_, err := client.Get(req, &response)
 	if err != nil {
-		log.Errorf("Failed to call IMS validate API: %v", err)
+		log.Errorf(i18n.Translate(ctx, "Failed to call IMS validate API: %v"), err)
 		return false
 	}
 
@@ -66,7 +66,7 @@ func ValidateWithIMS(hubID, skuID uuid.UUID) bool {
 }
 
 
-func ValidateOrder(order *models.Order) error {
+func ValidateOrder(ctx context.Context, order *models.Order) error {
 	if order.OrderID == uuid.Nil {
 		return errors.New("invalid OrderID")
 	}
@@ -79,6 +79,9 @@ func ValidateOrder(order *models.Order) error {
 	if order.SellerID == uuid.Nil {
 		return errors.New("invalid SellerID")
 	}
+	if order.TenantID == uuid.Nil {
+		return errors.New("invalid TenantID")
+	}
 	if order.Quantity <= 0 {
 		return errors.New("invalid Quantity")
 	}
@@ -86,9 +89,9 @@ func ValidateOrder(order *models.Order) error {
 		return errors.New("invalid Price")
 	}
 
-	valid := ValidateWithIMS(order.HubID, order.SKUID)
+	valid := ValidateWithIMS(ctx, order.HubID, order.SKUID)
 	if !valid {
-		return errors.New("invalid HubID or SKUID")
+		return errors.New(i18n.Translate(ctx, "invalid HubID or SKUID"))
 	}
 
 	return nil
