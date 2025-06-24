@@ -49,10 +49,6 @@ func StartConsumer(ctx context.Context) {
 type queueHandler struct{}
 
 func (h *queueHandler) Process(ctx context.Context, msgs *[]sqs.Message) error {
-	if err != nil {
-		log.Errorf(i18n.Translate(ctx, "Failed to create S3 client: %v"), err)
-		return err
-	}
 	for _, msg := range *msgs {
 		// Parse message payload
 		var payload struct {

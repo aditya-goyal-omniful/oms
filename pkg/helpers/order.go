@@ -22,8 +22,7 @@ func InitHTTPClient() {
 	client = httpclient.New("http://localhost:8087")
 }
 
-func UpdateOrderStatus(orderID uuid.UUID, status string) error {
-	ctx := context.TODO()
+func UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error {
 	collection, err := database.GetMongoCollection("oms", "orders")
 	if err != nil {
 		return err
@@ -71,7 +70,7 @@ func CheckAndUpdateOrder(ctx context.Context, order models.Order) {
 		newStatus = "new_order"
 	}
 
-	if err := UpdateOrderStatus(uuid.UUID(order.OrderID), newStatus); err != nil {
+	if err := UpdateOrderStatus(ctx, uuid.UUID(order.OrderID), newStatus); err != nil {
 		log.WithError(err).Error(i18n.Translate(ctx, "Failed to update status for order %s:"), order.OrderID)
 	}
 }
