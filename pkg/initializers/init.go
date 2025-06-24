@@ -12,7 +12,7 @@ import (
 )
 
 func InitServices(ctx context.Context) {
-	database.ConnectDB(ctx) 							// Initialize Mongo Client
+	database.ConnectDB(ctx) 						// Initialize Mongo Client
 
 	services.InitRedis(ctx)							// Initialize Redis
 
