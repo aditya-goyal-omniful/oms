@@ -125,9 +125,7 @@ go run cmd/main.go
 
 > View Swagger docs at:
 
-```
-http://localhost:8080/swagger/index.html
-```
+👉 [`http://localhost:8082/swagger/index.html`](http://localhost:8082/swagger/index.html)
 
 ---
 
