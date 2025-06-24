@@ -8,10 +8,13 @@ import (
 )
 
 func InitServer(server *http.Server) {
-	server.POST("/orders/bulkorder", controllers.CreateBulkOrder)
 	server.POST("/s3/filepath", controllers.StoreInS3)
+	server.POST("/orders/bulkorder", controllers.CreateBulkOrder)
 	server.POST("/orders", controllers.CreateOrder)
 	server.GET("/orders", controllers.GetOrders)
+
+	// Webhook Routes
+	server.POST("webhooks/register", controllers.RegisterWebhook)
 
 	// Swagger Routes
 	server.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

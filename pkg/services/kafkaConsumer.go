@@ -74,5 +74,14 @@ func (h *MessageHandler) Handle(ctx context.Context, msg *pubsub.Message) error 
 	}
 
 	helpers.CheckAndUpdateOrder(ctx, order)
+
+	tenantID := msg.Headers["X-Tenant-ID"]
+	if tenantID == "" {
+		log.Warnf("TenantID not found in Kafka headers")
+	} else {
+		NotifyTenantWebhook(ctx, tenantID, order)
+	}
+
+
 	return nil
 }

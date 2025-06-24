@@ -14,6 +14,8 @@ func InitServices() {
 
 	database.ConnectDB() 
 
+	services.InitRedis(ctx)
+
 	localConfig.ConnectS3(ctx) 				// Initialize S3 client
 
 	localConfig.SQSInit()   				// Initialize SQS client

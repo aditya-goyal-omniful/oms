@@ -35,7 +35,7 @@ func CloseKafkaProducer() {
 	}
 }
 
-func PublishOrder(order *models.Order) {
+func PublishOrder(order *models.Order, tenantID string) {
 	ctx := context.WithValue(context.Background(), "request_id", fmt.Sprintf("req-%s", order.OrderID))
 
 	// Marshal order into JSON
@@ -51,6 +51,7 @@ func PublishOrder(order *models.Order) {
 		Value: jsonBytes,
 		Headers: map[string]string{
 			"source": "order-service",
+			"X-Tenant-ID": tenantID,
 		},
 	}
 

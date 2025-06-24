@@ -58,7 +58,7 @@ func CreateOrder(c *gin.Context) {
 
 
 	// Push to Kafka
-	services.PublishOrder(&order)
+	services.PublishOrder(&order, tenantIDStr)
 
 	c.JSON(int(http.StatusOK), gin.H{
 		i18n.Translate(c, "message"):  i18n.Translate(c, "Order queued for processing"),

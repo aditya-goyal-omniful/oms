@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/aditya-goyal-omniful/oms/pkg/database"
-	parse_csv "github.com/aditya-goyal-omniful/oms/pkg/utils"
+	"github.com/aditya-goyal-omniful/oms/pkg/utils"
 	awsS3 "github.com/aws/aws-sdk-go-v2/service/s3"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -107,7 +107,7 @@ func (h *queueHandler) Process(ctx context.Context, msgs *[]sqs.Message) error {
 		log.Infof(i18n.Translate(ctx, "Starting to parse CSV file: %s"), tmpFile)
 
 		// Parse the CSV file
-		err = parse_csv.ParseCSV(tmpFile, ctx, database.Collection)
+		err = utils.ParseCSV(tmpFile, ctx, database.Collection)
 		if err != nil {
 			log.Errorf(i18n.Translate(ctx, "failed to parse CSV file: %v"), err)
 			continue

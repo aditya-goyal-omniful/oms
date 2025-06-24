@@ -12,6 +12,7 @@ mongo:
   uri: "mongodb://localhost:27017"
   dbname: "oms"
   collectionName: "orders"
+  webhookCollectionName: "webhooks"
 
 s3:
  bucketName: "orders"
