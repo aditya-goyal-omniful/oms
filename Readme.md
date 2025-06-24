@@ -1,10 +1,10 @@
-# 🧾 Order Management Service (OMS)
+# 📟 Order Management Service (OMS)
 
-Golang-based microservice to manage order intake, processing, and storage using Kafka, S3, SQS, and MongoDB.
+Golang-based microservice to manage order intake, processing, storage, and webhook notification using Kafka, S3, SQS, Redis, and MongoDB.
 
 ---
 
-## 🧩 Tech Stack
+## 🤩 Tech Stack
 
 * **Language**: Go
 * **Storage**: MongoDB
@@ -13,6 +13,7 @@ Golang-based microservice to manage order intake, processing, and storage using 
 * **File Storage**: S3 (via LocalStack)
 * **Config**: go\_commons/config
 * **HTTP Client**: go\_commons/httpclient
+* **i18n**: go\_commons/i18n for internationalization support
 * **Swagger**: Swagger UI via swaggo/gin-swagger
 
 ---
@@ -23,12 +24,13 @@ Golang-based microservice to manage order intake, processing, and storage using 
 * Bulk order upload via CSV → S3 → SQS → Parse → Validate → Save to MongoDB → Kafka
 * Order retry worker that retries on `on_hold` orders
 * RESTful APIs with multi-tenancy header support (`X-Tenant-ID`)
-* Swagger docs hosted at `/swagger/index.html`
 * Redis-backed validation caching for SKUs and Hubs
+* Webhook registration and triggering on successful order creation
+* Swagger docs hosted at `/swagger/index.html`
 
 ---
 
-## 🧪 API Endpoints
+## 🤪 API Endpoints
 
 | Method | Endpoint            | Description                         |
 | ------ | ------------------- | ----------------------------------- |
@@ -36,6 +38,8 @@ Golang-based microservice to manage order intake, processing, and storage using 
 | POST   | `/orders/bulkorder` | Trigger bulk order from S3 via SQS  |
 | POST   | `/s3/filepath`      | Upload local CSV to S3              |
 | GET    | `/orders`           | Filter orders by seller, date, etc. |
+| POST   | `/webhooks`         | Register a webhook for a tenant     |
+| GET    | `/webhooks`         | List all registered webhooks        |
 
 ---
 
@@ -60,11 +64,20 @@ Golang-based microservice to manage order intake, processing, and storage using 
 ### 4. **Kafka Consumer (OMS)**
 
 * Listens to topic `order.created`
-* Calls IMS API to check inventory and updates status (`new_order` or keep `on_hold`)
+* Calls IMS API to check inventory and updates status (`new_order` or keeps `on_hold`)
+* If successful, triggers tenant's webhook (if registered)
 
 ### 5. **Order Retry Worker**
 
 * Background cron worker retries `on_hold` orders every 2 minutes
+
+---
+
+## 🔔 Webhook Flow
+
+* Tenants can register a webhook URL using `POST /webhooks`
+* Upon successful order creation (status changed to `new_order`), OMS sends a POST payload to the tenant's webhook URL
+* Webhook URLs are cached in Redis for performance
 
 ---
 
@@ -82,7 +95,7 @@ Services:
 
 ---
 
-## 🪣 Create S3 Bucket via LocalStack
+## 🫣 Create S3 Bucket via LocalStack
 
 ```bash
 aws --endpoint-url=http://localhost:4566 s3api create-bucket --bucket orders
@@ -108,7 +121,7 @@ go run cmd/main.go
 
 ---
 
-## 📎 Swagger UI
+## 📌 Swagger UI
 
 > View Swagger docs at:
 
@@ -121,8 +134,8 @@ http://localhost:8080/swagger/index.html
 ## 📂 CSV Upload Format
 
 ```csv
-order_id,sku_id,quantity,seller_id,hub_id,price
-<uuid>,<uuid>,<int>,<uuid>,<uuid>,<float>
+order_id,sku_id,quantity,seller_id,hub_id,price,tenant_id
+<uuid>,<uuid>,<int>,<uuid>,<uuid>,<float>,<uuid>
 ```
 
 > `order_id` is optional. If not provided, a UUID is generated.
@@ -138,7 +151,7 @@ order_id,sku_id,quantity,seller_id,hub_id,price
 ## 📬 Kafka Topics
 
 * **Producer**: `order.created`
-* **Consumer**: Updates order status after IMS inventory check
+* **Consumer**: Updates order status after IMS inventory check and sends webhooks
 
 ---
 
@@ -165,7 +178,7 @@ order_id,sku_id,quantity,seller_id,hub_id,price
 
 ---
 
-## 📈 Future Improvements
+## 📊 Future Improvements
 
 * Add metrics and Prometheus integration
 * Add test coverage
@@ -175,8 +188,8 @@ order_id,sku_id,quantity,seller_id,hub_id,price
 
 ## 🧠 Developer Notes
 
-* Redis is used to cache SKU/Hub validation from IMS
-* go\_commons provides reusable HTTP client, SQS, S3, and logging interfaces
+* Redis is used to cache SKU/Hub validation from IMS and webhook URLs
+* go\_commons provides reusable HTTP client, SQS, S3, Redis, config, i18n, and logging interfaces
 * Swagger comments are generated using `swag init`
 
 ---
@@ -187,3 +200,4 @@ order_id,sku_id,quantity,seller_id,hub_id,price
 * [MongoDB Driver](https://github.com/mongodb/mongo-go-driver)
 * [AWS SDK v2 for Go](https://aws.github.io/aws-sdk-go-v2/)
 * [LocalStack](https://github.com/localstack/localstack)
+* [swaggo/swag](https://github.com/swaggo/swag)
