@@ -12,15 +12,15 @@ import (
 var ctx context.Context
 
 func init() {
-	err := config.Init(time.Second * 10) 		// loads the config.yaml
+	err := config.Init(time.Second * 10)
 	if err != nil {
-		log.Panicf(i18n.Translate(ctx, "Error while initialising config, err: %v"), err)
+		log.Panicf("Error while initialising config, err: %v", err)
 		panic(err)
 	}
 
-	ctx, err = config.TODOContext() 			// global context
+	ctx, err = config.TODOContext()
 	if err != nil {
-		log.Panicf(i18n.Translate(ctx, "Failed to create context: %v"), err)
+		log.Panicf("Failed to create context: %v", err)
 	}
 	log.Println(i18n.Translate(ctx, "Context initialized successfully!"))
 }
