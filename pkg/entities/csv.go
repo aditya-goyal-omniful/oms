@@ -8,6 +8,7 @@ import (
 
 	"strings"
 
+	localContext "github.com/aditya-goyal-omniful/oms/context"
 	localConfig "github.com/aditya-goyal-omniful/oms/pkg/configs"
 	"github.com/aditya-goyal-omniful/oms/pkg/database"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -48,6 +49,7 @@ func InitCSV(ctx context.Context) {
 }
 
 func StoreInS3(s *StoreCSV) error {
+	ctx := localContext.GetContext()
 	filepath := s.FilePath
 	fileBytes := localConfig.GetLocalCSV(filepath)
 
@@ -70,6 +72,7 @@ func StoreInS3(s *StoreCSV) error {
 }
 
 func ValidateAndPushToSQS(req *BulkOrderRequest) error {
+	ctx := localContext.GetContext()
 	log.Infof(i18n.Translate(ctx, "Validating S3 path:"))
 	filePath := req.FilePath
 
@@ -109,7 +112,7 @@ func ValidateAndPushToSQS(req *BulkOrderRequest) error {
 }
 
 func PushToSQS(bucket string, key string) error {
-
+	ctx := localContext.GetContext()
 	payload := fmt.Sprintf(`{"bucket":"%s", "key":"%s"}`, bucket, key)
 	msg := &sqs.Message{
 		Value: []byte(payload),
