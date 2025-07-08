@@ -28,11 +28,13 @@ type BulkOrderRequest struct {
 	FilePath string `json:"filePath"`
 }
 
-var err error
-var client *awsS3.Client 			// Returned by s3.NewDefaultAWSS3Client() (go_commons)
-var ctx context.Context
-var collection *mongo.Collection
-var publisher *sqs.Publisher
+var (
+	err error
+	client *awsS3.Client 			// Returned by s3.NewDefaultAWSS3Client() (go_commons)
+	ctx context.Context
+	collection *mongo.Collection
+	publisher *sqs.Publisher
+)
 
 func InitCSV(ctx context.Context) {
 	dbname := config.GetString(ctx, "mongo.dbname")
@@ -47,6 +49,21 @@ func InitCSV(ctx context.Context) {
 
 	publisher = localConfig.GetPublisher() 		// Get Publisher
 }
+
+func IsValidS3Path(path string) (bucket, key string, err error) {
+	if !strings.HasPrefix(path, "s3://") {
+		return "", "", errors.New("invalid S3 path format: must start with s3://")
+	}
+
+	path = strings.TrimPrefix(path, "s3://")
+	parts := strings.SplitN(path, "/", 2)
+	if len(parts) != 2 {
+		return "", "", errors.New("invalid S3 path: must be in s3://bucket/key format")
+	}
+
+	return parts[0], parts[1], nil
+}
+
 
 func StoreInS3(s *StoreCSV) error {
 	ctx := localContext.GetContext()
@@ -76,22 +93,14 @@ func ValidateAndPushToSQS(req *BulkOrderRequest) error {
 	log.Infof(i18n.Translate(ctx, "Validating S3 path:"))
 	filePath := req.FilePath
 
-	if !strings.HasPrefix(filePath, "s3://") {
-		return errors.New(i18n.Translate(ctx, "invalid S3 path format: must start with s3://"))
+	bucket, key, err := IsValidS3Path(filePath)
+	if err != nil {
+		log.Error(err)
 	}
-
-	path := strings.TrimPrefix(filePath, "s3://")
-	parts := strings.SplitN(path, "/", 2)
-	if len(parts) != 2 {
-		return errors.New(i18n.Translate(ctx, "invalid S3 path: must be in s3://bucket/key format"))
-	}
-
-	bucket := parts[0]
-	key := parts[1]
 
 	log.Infof(bucket, key)
 
-	_, err := client.HeadObject(ctx, &awsS3.HeadObjectInput{
+	_, err = client.HeadObject(ctx, &awsS3.HeadObjectInput{
 		Bucket: &bucket,
 		Key:    &key,
 	})
@@ -111,12 +120,16 @@ func ValidateAndPushToSQS(req *BulkOrderRequest) error {
 	return nil
 }
 
-func PushToSQS(bucket string, key string) error {
-	ctx := localContext.GetContext()
+func BuildSQSMessage(bucket string, key string) *sqs.Message {
 	payload := fmt.Sprintf(`{"bucket":"%s", "key":"%s"}`, bucket, key)
-	msg := &sqs.Message{
+	return &sqs.Message{
 		Value: []byte(payload),
 	}
+}
+
+func PushToSQS(bucket string, key string) error {
+	ctx := localContext.GetContext()
+	msg := BuildSQSMessage(bucket, key)
 
 	// Publish the message to SQS
 	err = publisher.Publish(ctx, msg)

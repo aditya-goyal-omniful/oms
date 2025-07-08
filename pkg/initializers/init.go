@@ -9,9 +9,12 @@ import (
 	"github.com/aditya-goyal-omniful/oms/pkg/database"
 	"github.com/aditya-goyal-omniful/oms/pkg/entities"
 	"github.com/aditya-goyal-omniful/oms/pkg/services"
+	"github.com/aditya-goyal-omniful/oms/pkg/utils"
 )
 
 func InitServices(ctx context.Context) {
+	utils.InitHTTPClient(ctx)
+
 	database.ConnectDB(ctx) 						// Initialize Mongo Client
 
 	services.InitRedis(ctx)							// Initialize Redis

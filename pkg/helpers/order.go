@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"time"
@@ -22,6 +23,51 @@ func InitHTTPClient() {
 	client = httpclient.New("http://localhost:8087")
 }
 
+func SendInventoryCheckRequest(ctx context.Context, order models.Order, httpClient httpclient.Client) ([]byte, error) {
+	payload := map[string]interface{}{
+		"sku_id":   order.SKUID,
+		"hub_id":   order.HubID,
+		"quantity": order.Quantity,
+	}
+
+	req, _ := request.NewBuilder().
+		SetUri("/inventory/check-and-update").
+		SetMethod("POST").
+		SetBody(payload).
+		Build()
+
+	resp, err := httpClient.Send(ctx, req)
+	if err != nil {
+		log.WithError(err).Error(i18n.Translate(ctx, "HTTP call failed for order %s:"), order.OrderID)
+		return nil, err
+	}
+
+	return resp.Body(), nil
+}
+
+func EvaluateInventoryResponse(body []byte) string {
+	var result struct {
+		Available bool `json:"available"`
+	}
+
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "error"
+	}
+
+	if result.Available {
+		return "new_order"
+	}
+	return "on_hold"
+}
+
+func CheckOrder(ctx context.Context, order models.Order, httpClient httpclient.Client) string {
+	body, err := SendInventoryCheckRequest(ctx, order, httpClient)
+	if err != nil {
+		return "error"
+	}
+	return EvaluateInventoryResponse(body)
+}
+
 func UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error {
 	collection, err := database.GetMongoCollection("oms", "orders")
 	if err != nil {
@@ -39,35 +85,9 @@ func UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) er
 }
 
 func CheckAndUpdateOrder(ctx context.Context, order models.Order) {
-	payload := map[string]interface{}{
-		"sku_id":   order.SKUID,
-		"hub_id":   order.HubID,
-		"quantity": order.Quantity,
-	}
-
-	req, _ := request.NewBuilder().
-		SetUri("/inventory/check-and-update").
-		SetMethod("POST").
-		SetBody(payload).
-		Build()
-
-	resp, err := client.Send(ctx, req)
-	if err != nil {
-		log.WithError(err).Error(i18n.Translate(ctx, "HTTP call failed for order %s:"), order.OrderID)
+	newStatus := CheckOrder(ctx, order, client)
+	if newStatus == "error" {
 		return
-	}
-
-	var result struct {
-		Available bool `json:"available"`
-	}
-	if err := resp.UnmarshalBody(&result); err != nil {
-		log.WithError(err).Error(i18n.Translate(ctx, "Failed to unmarshal IMS response for order %s:"), order.OrderID)
-		return
-	}
-
-	newStatus := "on_hold"
-	if result.Available {
-		newStatus = "new_order"
 	}
 
 	if err := UpdateOrderStatus(ctx, uuid.UUID(order.OrderID), newStatus); err != nil {

@@ -11,7 +11,7 @@ import (
 
 var ctx context.Context
 
-func init() {
+func InitAppContext() {
 	err := config.Init(time.Second * 10)
 	if err != nil {
 		log.Panicf("Error while initialising config, err: %v", err)

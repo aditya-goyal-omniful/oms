@@ -26,6 +26,80 @@ func GetLocalCSV(filepath string) ([]byte, error) {
 	return fileBytes, nil
 }
 
+func extractOrderFromRow(row []string, colIdx map[string]int) (*models.Order, error) {
+	orderID, err := uuid.Parse(row[colIdx["order_id"]])
+	if err != nil {
+		return nil, err
+	}
+	skuID, err := uuid.Parse(row[colIdx["sku_id"]])
+	if err != nil {
+		return nil, err
+	}
+	hubID, err := uuid.Parse(row[colIdx["hub_id"]])
+	if err != nil {
+		return nil, err
+	}
+	sellerID, err := uuid.Parse(row[colIdx["seller_id"]])
+	if err != nil {
+		return nil, err
+	}
+	tenantID, err := uuid.Parse(row[colIdx["tenant_id"]])
+	if err != nil {
+		return nil, err
+	}
+	price, err := strconv.ParseFloat(row[colIdx["price"]], 64)
+	if err != nil {
+		return nil, err
+	}
+	quantity, err := strconv.Atoi(row[colIdx["quantity"]])
+	if err != nil {
+		return nil, err
+	}
+
+	order := &models.Order{
+		OrderID:   orderID,
+		SKUID:     skuID,
+		HubID:     hubID,
+		SellerID:  sellerID,
+		TenantID:  tenantID,
+		Price:     price,
+		Quantity:  quantity,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	return order, nil
+}
+
+func writeInvalidCSV(ctx context.Context, headers []string, invalid csv.Records) error {
+	timestamp := time.Now().Format("20060102_150405")
+	filePath := fmt.Sprintf("public/invalid_orders_%s.csv", timestamp)
+
+	dest := &csv.Destination{}
+	dest.SetFileName(filePath)
+	dest.SetUploadDirectory("public/")
+	dest.SetRandomizedFileName(false)
+
+	writer, err := csv.NewCommonCSVWriter(
+		csv.WithWriterHeaders(headers),
+		csv.WithWriterDestination(*dest),
+	)
+	if err != nil {
+		return err
+	}
+	defer writer.Close(ctx)
+
+	if err := writer.Initialize(); err != nil {
+		return err
+	}
+	if err := writer.WriteNextBatch(invalid); err != nil {
+		return err
+	}
+
+	log.Infof(i18n.Translate(ctx, "Invalid rows saved to CSV at: %s"), filePath)
+	publicURL := fmt.Sprintf("http://localhost:8082/%s", filePath)
+	log.Infof(i18n.Translate(ctx, "Download invalid CSV here: %s"), publicURL)
+	return nil
+}
 
 func ParseCSV(tmpFile string, ctx context.Context, collection *mongo.Collection) error {
 	csvReader, err := csv.NewCommonCSV(
@@ -69,76 +143,29 @@ func ParseCSV(tmpFile string, ctx context.Context, collection *mongo.Collection)
 		for _, row := range records {
 			log.Infof(i18n.Translate(ctx, "CSV Row: %v"), row)
 
-			orderID, _ := uuid.Parse(row[colIdx["order_id"]])
-			skuID, _ := uuid.Parse(row[colIdx["sku_id"]])
-			hubID, _ := uuid.Parse(row[colIdx["hub_id"]])
-			sellerID, _ := uuid.Parse(row[colIdx["seller_id"]])
-			tenantID, _ := uuid.Parse(row[colIdx["tenant_id"]])
-			price, _ := strconv.ParseFloat(row[colIdx["price"]], 64)
-			quantity, _ := strconv.Atoi(row[colIdx["quantity"]])
-
-			order := models.Order{
-				OrderID:  orderID,
-				SKUID:    skuID,
-				HubID:    hubID,
-				SellerID: sellerID,
-				TenantID: tenantID,
-				Price:    price,
-				Quantity: quantity,
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			}
-
-			if err := ValidateOrder(ctx, &order); err != nil {
-				log.Warnf(i18n.Translate(ctx, "Validation failed: %v"), err)
+			order, err := extractOrderFromRow(row, colIdx)
+			if err != nil {
+				log.Warnf(i18n.Translate(ctx, "Failed to parse order row: %v"), err)
 				invalid = append(invalid, row)
 				continue
 			}
 
-			if err := saveOrder(ctx, &order, collection); err != nil {
-				log.Errorf(i18n.Translate(ctx, "Save failed: %v"), err)
+			if err := validateAndSaveOrder(ctx, order, collection); err != nil {
+				log.Warnf(i18n.Translate(ctx, "Validation or save failed: %v"), err)
 				invalid = append(invalid, row)
 				continue
 			}
 
-			services.PublishOrder(&order, tenantID.String())
+			services.PublishOrder(order, order.TenantID.String())
 		}
 	}
 
 	if len(invalid) > 0 {
-		timestamp := time.Now().Format("20060102_150405")
-		filePath := fmt.Sprintf("public/invalid_orders_%s.csv", timestamp)
-
-		dest := &csv.Destination{}
-		dest.SetFileName(filePath)
-		dest.SetUploadDirectory("public/")
-		dest.SetRandomizedFileName(false)
-
-		writer, err := csv.NewCommonCSVWriter(
-			csv.WithWriterHeaders(headers),
-			csv.WithWriterDestination(*dest),
-		)
-		if err != nil {
-			log.Errorf(i18n.Translate(ctx, "failed to create CSV writer: %v"), err)
+		if err := writeInvalidCSV(ctx, headers, invalid); err != nil {
+			log.Errorf(i18n.Translate(ctx, "Error writing invalid CSV: %v"), err)
 			return err
 		}
-		defer writer.Close(ctx)
-
-		if err := writer.Initialize(); err != nil {
-			log.Errorf(i18n.Translate(ctx, "failed to initialize CSV writer: %v"), err)
-			return err
-		}
-
-		if err := writer.WriteNextBatch(invalid); err != nil {
-			log.Errorf(i18n.Translate(ctx, "failed to write invalid rows: %v"), err)
-			return err
-		}
-
-		log.Infof(i18n.Translate(ctx, "Invalid rows saved to CSV at: %s"), filePath)
-
-		publicURL := fmt.Sprintf("http://localhost:8082/%s", filePath)
-
-		log.Infof(i18n.Translate(ctx, "Download invalid CSV here: %s"), publicURL)
 	}
+
 	return nil
 }

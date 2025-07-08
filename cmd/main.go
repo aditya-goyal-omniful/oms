@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/aditya-goyal-omniful/oms/context"
+	localContext "github.com/aditya-goyal-omniful/oms/context"
 	"github.com/aditya-goyal-omniful/oms/docs"
 	"github.com/aditya-goyal-omniful/oms/pkg/initializers"
 	"github.com/aditya-goyal-omniful/oms/pkg/middlewares"
@@ -24,6 +25,7 @@ import (
 // @BasePath /
 
 func main() {
+	localContext.InitAppContext()
 	ctx := context.GetContext()
 
 	initializers.InitServices(ctx)

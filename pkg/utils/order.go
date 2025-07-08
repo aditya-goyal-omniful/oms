@@ -8,7 +8,6 @@ import (
 
 	nethttp "net/http"
 
-	localContext "github.com/aditya-goyal-omniful/oms/context"
 	"github.com/aditya-goyal-omniful/oms/pkg/models"
 	"github.com/google/uuid"
 	"github.com/omniful/go_commons/config"
@@ -26,13 +25,11 @@ type ValidationResponse struct {
 var client *http.Client
 var err error
 
-func init() {
+func InitHTTPClient(ctx context.Context) {
 	transport := &nethttp.Transport{
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
 	}
-
-	ctx := localContext.GetContext()
 
 	serviceName := config.GetString(ctx, "client.serviceName")
 	baseURL := config.GetString(ctx, "client.baseURL")
@@ -46,7 +43,7 @@ func init() {
 }
 
 
-func ValidateWithIMS(ctx context.Context, hubID, skuID uuid.UUID) bool {
+var ValidateWithIMS = func(ctx context.Context, hubID, skuID uuid.UUID) bool {
 	req := &http.Request{
 		Url: fmt.Sprintf("validators/validate_order/%s/%s", hubID, skuID),
 		Headers: map[string][]string{
@@ -110,3 +107,13 @@ func saveOrder(ctx context.Context, order *models.Order, collection *mongo.Colle
 	return nil
 }
 
+
+func validateAndSaveOrder(ctx context.Context, order *models.Order, collection *mongo.Collection) error {
+	if err := ValidateOrder(ctx, order); err != nil {
+		return err
+	}
+	if err := saveOrder(ctx, order, collection); err != nil {
+		return err
+	}
+	return nil
+}
