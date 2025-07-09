@@ -14,6 +14,16 @@ import (
 
 var kafkaProducer *kafka.ProducerClient
 
+type OrderPublisher interface {
+	Publish(order *models.Order, tenantID string)
+}
+
+type RealPublisher struct{}
+
+func (RealPublisher) Publish(order *models.Order, tenantID string) {
+	PublishOrder(order, tenantID)
+}
+
 func InitKafkaProducer(ctx context.Context) {
 	log.Infof(i18n.Translate(ctx, "Initializing Kafka producer"))
 

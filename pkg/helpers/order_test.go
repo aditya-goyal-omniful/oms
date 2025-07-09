@@ -1,6 +1,8 @@
 package helpers
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestEvaluateInventoryResponse(t *testing.T) {
 	tests := []struct {

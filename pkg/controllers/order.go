@@ -13,6 +13,13 @@ import (
 	"github.com/omniful/go_commons/log"
 )
 
+var (
+	OrderFetcher helpers.OrderFetcher = helpers.RealFetcher{}
+	SKUValidator helpers.SKUValidator = helpers.RealValidator{}
+	OrderPublisher services.OrderPublisher = services.RealPublisher{}
+)
+
+
 // CreateOrder godoc
 // @Summary Create a new order (async via Kafka)
 // @Description Accepts an order payload, validates SKU and Hub with IMS, sets status to `on_hold`, and publishes to Kafka for further processing.
@@ -43,7 +50,7 @@ func CreateOrder(c *gin.Context) {
 
 
 	// Validate SKU and Hub via Redis + IMS
-	isValid, err := helpers.ValidateSKUAndHubs(c.Request.Context(), order.SKUID, order.HubID, tenantID)
+	isValid, err := SKUValidator.Validate(c.Request.Context(), order.SKUID, order.HubID, tenantID)
 	if err != nil || !isValid {
 		log.Warnf(i18n.Translate(c, "Invalid SKU or Hub: sku_id=%s, hub_id=%s"), order.SKUID, order.HubID)
 		c.JSON(int(http.StatusBadRequest), gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Invalid SKU ID or Hub ID")})
@@ -58,7 +65,7 @@ func CreateOrder(c *gin.Context) {
 
 
 	// Push to Kafka
-	services.PublishOrder(&order, tenantIDStr)
+	OrderPublisher.Publish(&order, tenantIDStr)
 
 	c.JSON(int(http.StatusOK), gin.H{
 		i18n.Translate(c, "message"):  i18n.Translate(c, "Order queued for processing"),
@@ -117,7 +124,7 @@ func GetOrders(c *gin.Context) {
 		}
 	}
 
-	orders, err := helpers.FetchOrders(c.Request.Context(), sellerID, status, startDate, endDate)
+	orders, err := OrderFetcher.FetchOrders(c.Request.Context(), sellerID, status, startDate, endDate)
 	if err != nil {
 		log.WithError(err).Error(i18n.Translate(c, "Failed to fetch orders:"))
 		c.JSON(int(http.StatusInternalServerError), gin.H{i18n.Translate(c, "error"): i18n.Translate(c, "Failed to fetch orders")})

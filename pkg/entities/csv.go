@@ -21,11 +21,31 @@ import (
 )
 
 type StoreCSV struct {
-	FilePath string `json:"filePath"`
+	FilePath string `json:"filePath" binding:"required"`
 }
 
 type BulkOrderRequest struct {
-	FilePath string `json:"filePath"`
+	FilePath string `json:"filePath" binding:"required"`
+}
+
+type RealUploader struct{}
+
+type S3Uploader interface {
+	Store(*StoreCSV) error
+}
+
+func (r *RealUploader) Store(req *StoreCSV) error {
+	return StoreInS3(req)
+}
+
+type SQSPusher interface {
+	Push(*BulkOrderRequest) error
+}
+
+type RealPusher struct{}
+
+func (r *RealPusher) Push(req *BulkOrderRequest) error {
+	return ValidateAndPushToSQS(req)
 }
 
 var (

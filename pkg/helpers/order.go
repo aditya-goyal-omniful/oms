@@ -17,6 +17,26 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
+type OrderFetcher interface {
+	FetchOrders(ctx context.Context, sellerID uuid.UUID, status string, startDate, endDate time.Time) ([]models.Order, error)
+}
+
+type RealFetcher struct{}
+
+func (r RealFetcher) FetchOrders(ctx context.Context, sellerID uuid.UUID, status string, startDate, endDate time.Time) ([]models.Order, error) {
+	return FetchOrders(ctx, sellerID, status, startDate, endDate) // your existing logic
+}
+
+type SKUValidator interface {
+	Validate(ctx context.Context, skuID, hubID, tenantID uuid.UUID) (bool, error)
+}
+
+type RealValidator struct{}
+
+func (RealValidator) Validate(ctx context.Context, skuID, hubID, tenantID uuid.UUID) (bool, error) {
+	return ValidateSKUAndHubs(ctx, skuID, hubID, tenantID)
+}
+
 var client httpclient.Client
 
 func InitHTTPClient() {

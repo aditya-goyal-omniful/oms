@@ -12,9 +12,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-var mongoClient *mongo.Client
-var err error
-var Collection *mongo.Collection
+var (
+	mongoClient *mongo.Client
+	err error
+	Collection *mongo.Collection
+)
 
 func ConnectDB(ctx context.Context) {
 	log.Infof(i18n.Translate(ctx, "Connecting to MongoDB..."))

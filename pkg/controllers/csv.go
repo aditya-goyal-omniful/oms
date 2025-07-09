@@ -10,6 +10,10 @@ import (
 	"github.com/omniful/go_commons/log"
 )
 
+var Uploader entities.S3Uploader = &entities.RealUploader{}
+
+var Pusher entities.SQSPusher = &entities.RealPusher{}
+
 // StoreInS3 godoc
 // @Summary Upload file path to S3 (via localstack)
 // @Description Accepts file path in JSON and uploads the file to S3
@@ -25,7 +29,6 @@ func StoreInS3(c *gin.Context) {
 
 	body, _ := c.GetRawData()
 	log.Infof(i18n.Translate(c, "Raw Body:"), i18n.Translate(c, string(body)))
-
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	if err := c.ShouldBindJSON(req); err != nil {
@@ -38,7 +41,7 @@ func StoreInS3(c *gin.Context) {
 
 	log.Infof(i18n.Translate(c, "Parsed filePath:"), i18n.Translate(c, req.FilePath))
 
-	err := entities.StoreInS3(req)
+	err := Uploader.Store(req)
 	if err != nil {
 		c.JSON(400, gin.H{
 			i18n.Translate(c, "error"): i18n.Translate(c, "Failed to upload to s3"),
@@ -49,6 +52,7 @@ func StoreInS3(c *gin.Context) {
 		i18n.Translate(c, "message"): i18n.Translate(c, "File uploaded to S3!"),
 	})
 }
+
 
 // CreateBulkOrder godoc
 // @Summary Trigger bulk order creation via S3
@@ -62,25 +66,20 @@ func StoreInS3(c *gin.Context) {
 // @Router /orders/bulkorder [post]
 func CreateBulkOrder(c *gin.Context) {
 	var req = &entities.BulkOrderRequest{}
+
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
-		c.JSON(400, gin.H{
-			i18n.Translate(c, "error"): i18n.Translate(c, "Failed Parse request"),
-		})
+		c.JSON(400, gin.H{"error": "Failed Parse request"})
 		return
 	}
-	err = entities.ValidateAndPushToSQS(req)
 
+	err = Pusher.Push(req)
 	if err != nil {
 		c.JSON(400, gin.H{
-			i18n.Translate(c, "error"): i18n.Translate(c, "Invalid path to s3 or s3 bucket dont exits, first try creating one and retry"),
+			"error": "Invalid path to s3 or s3 bucket doesn't exist",
 		})
 		return
 	}
 
-	log.Infof(i18n.Translate(c, "Valid Path to s3 !"))
-	log.Infof(i18n.Translate(c, "Pushing to sqs !"))
-	c.JSON(200, gin.H{
-		i18n.Translate(c, "message"): i18n.Translate(c, "Valid Path to s3 !"),
-	})
+	c.JSON(200, gin.H{"message": "Valid Path to s3 !"})
 }
